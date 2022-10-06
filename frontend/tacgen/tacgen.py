@@ -124,6 +124,12 @@ class TACGen(Visitor[FuncVisitor, None]):
         op = {
             node.BinaryOp.Add: tacop.BinaryOp.ADD,
             # You can add binary operations here.
+            # 加减乘除显然是容易实现的
+            node.BinaryOp.Sub : tacop.BinaryOp.SUB,
+            node.BinaryOp.Mul: tacop.BinaryOp.MUL,
+            node.BinaryOp.Div : tacop.BinaryOp.DIV,
+            # mod correspond to rem
+            node.BinaryOp.Mod : tacop.BinaryOp.REM
         }[expr.op]
         expr.setattr(
             "val", mv.visitBinary(op, expr.lhs.getattr("val"), expr.rhs.getattr("val"))
