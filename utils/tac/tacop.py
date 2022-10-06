@@ -41,6 +41,8 @@ class BinaryOp(Enum):
     GEQ = auto()
     AND = auto()
     OR = auto()
+    LAND = auto()
+    LOR = auto()
 
 
 # Kinds of branching with conditions.

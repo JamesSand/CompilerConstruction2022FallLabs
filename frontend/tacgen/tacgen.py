@@ -110,6 +110,7 @@ class TACGen(Visitor[FuncVisitor, None]):
         op = {
             node.UnaryOp.Neg: tacop.UnaryOp.NEG,
             # You can add unary operations here.
+            # step2
             # BitNot = ~ correspond to not
             node.UnaryOp.BitNot: tacop.UnaryOp.NOT,
             # LogicNot = ! correspond to seqz
@@ -124,13 +125,33 @@ class TACGen(Visitor[FuncVisitor, None]):
         op = {
             node.BinaryOp.Add: tacop.BinaryOp.ADD,
             # You can add binary operations here.
+            # step3
             # 加减乘除显然是容易实现的
             node.BinaryOp.Sub : tacop.BinaryOp.SUB,
             node.BinaryOp.Mul: tacop.BinaryOp.MUL,
             node.BinaryOp.Div : tacop.BinaryOp.DIV,
             # mod correspond to rem
-            node.BinaryOp.Mod : tacop.BinaryOp.REM
+            node.BinaryOp.Mod : tacop.BinaryOp.REM,
+
+            # step4
+            # LT = <
+            node.BinaryOp.LT : tacop.BinaryOp.SLT,
+            node.BinaryOp.GT : tacop.BinaryOp.SGT,
+            node.BinaryOp.EQ : tacop.BinaryOp.EQU,
+            node.BinaryOp.NE : tacop.BinaryOp.NEQ,
+            # LE = <=
+            # sgt	a0,a0,a1
+	        # xori	a0,a0,1
+            node.BinaryOp.LE : tacop.BinaryOp.LEQ,
+            # GT = > 
+            
+            node.BinaryOp.GE : tacop.BinaryOp.GEQ,
+            
+            node.BinaryOp.LogicAnd :tacop.BinaryOp.LAND,
+            node.BinaryOp.LogicOr : tacop.BinaryOp.LOR
+
         }[expr.op]
+        # 直接根据 expr.op 取字典里边的 op
         expr.setattr(
             "val", mv.visitBinary(op, expr.lhs.getattr("val"), expr.rhs.getattr("val"))
         )
