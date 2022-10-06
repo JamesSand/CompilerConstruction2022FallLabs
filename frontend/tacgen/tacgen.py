@@ -110,6 +110,10 @@ class TACGen(Visitor[FuncVisitor, None]):
         op = {
             node.UnaryOp.Neg: tacop.UnaryOp.NEG,
             # You can add unary operations here.
+            # BitNot = ~ correspond to not
+            node.UnaryOp.BitNot: tacop.UnaryOp.NOT,
+            # LogicNot = ! correspond to seqz
+            node.UnaryOp.LogicNot: tacop.UnaryOp.SEQZ
         }[expr.op]
         expr.setattr("val", mv.visitUnary(op, expr.operand.getattr("val")))
 
