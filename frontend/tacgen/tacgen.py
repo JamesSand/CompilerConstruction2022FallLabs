@@ -134,21 +134,16 @@ class TACGen(Visitor[FuncVisitor, None]):
             node.BinaryOp.Mod : tacop.BinaryOp.REM,
 
             # step4
-            # LT = <
+            # LT = < 自带的
             node.BinaryOp.LT : tacop.BinaryOp.SLT,
             node.BinaryOp.GT : tacop.BinaryOp.SGT,
+            # 要写的
             node.BinaryOp.EQ : tacop.BinaryOp.EQU,
             node.BinaryOp.NE : tacop.BinaryOp.NEQ,
-            # LE = <=
-            # sgt	a0,a0,a1
-	        # xori	a0,a0,1
             node.BinaryOp.LE : tacop.BinaryOp.LEQ,
-            # GT = > 
-            
             node.BinaryOp.GE : tacop.BinaryOp.GEQ,
-            
             node.BinaryOp.LogicAnd :tacop.BinaryOp.LAND,
-            node.BinaryOp.LogicOr : tacop.BinaryOp.LOR
+            node.BinaryOp.LogicOr : tacop.BinaryOp.LOR,
 
         }[expr.op]
         # 直接根据 expr.op 取字典里边的 op

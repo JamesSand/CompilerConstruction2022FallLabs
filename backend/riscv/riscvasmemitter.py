@@ -77,7 +77,41 @@ class RiscvAsmEmitter(AsmEmitter):
             self.seq.append(Riscv.Unary(instr.op, instr.dst, instr.operand))
  
         def visitBinary(self, instr: Binary) -> None:
-            self.seq.append(Riscv.Binary(instr.op, instr.dst, instr.lhs, instr.rhs))
+            # node.BinaryOp.EQ : tacop.BinaryOp.EQU,
+            # node.BinaryOp.NE : tacop.BinaryOp.NEQ,
+            # node.BinaryOp.LE : tacop.BinaryOp.LEQ,
+            # node.BinaryOp.GE : tacop.BinaryOp.GEQ,
+            # node.BinaryOp.LogicAnd :tacop.BinaryOp.LAND,
+            # node.BinaryOp.LogicOr : tacop.BinaryOp.LOR,
+            
+            if instr.op == BinaryOp.EQU:
+                self.seq.append(Riscv.Binary(BinaryOp.SUB, instr.dst, instr.lhs, instr.rhs))
+                self.seq.append(Riscv.Unary(UnaryOp.SEQZ, instr.dst, instr.dst))
+            elif instr.op == BinaryOp.NEQ:
+                self.seq.append(Riscv.Binary(BinaryOp.SUB, instr.dst, instr.lhs, instr.rhs))
+                self.seq.append(Riscv.Unary(UnaryOp.SNEZ, instr.dst, instr.dst))
+            elif instr.op == BinaryOp.LEQ:
+                # sgt	a0,a0,a1
+	            # xori	a0,a0,1
+                self.seq.append(Riscv.Binary(BinaryOp.SGT, instr.dst, instr.lhs, instr.rhs))
+                self.seq.append(Riscv.Unary(UnaryOp.SEQZ, instr.dst,instr.dst ))
+            elif instr.op == BinaryOp.GEQ:
+                # slt	a0,a0,a1
+	            # xori	a0,a0,1
+                self.seq.append(Riscv.Binary(BinaryOp.SLT, instr.dst, instr.lhs, instr.rhs))
+                self.seq.append(Riscv.Unary(UnaryOp.SEQZ, instr.dst,instr.dst ))
+            elif instr.op == BinaryOp.LAND:
+                self.seq.append(Riscv.Unary(UnaryOp.SNEZ, instr.dst,instr.lhs ))
+                # 这里缺了一个伪指令
+                self.seq.append(Riscv.Binary(BinaryOp.AND, instr.dst, instr.dst, instr.rhs))
+                self.seq.append(Riscv.Unary(UnaryOp.SNEZ, instr.dst,instr.dst ))
+                
+            elif instr.op == BinaryOp.LOR:
+                self.seq.append(Riscv.Binary(BinaryOp.OR, instr.dst, instr.lhs, instr.rhs))
+                self.seq.append(Riscv.Unary(UnaryOp.SNEZ, instr.dst, instr.dst))
+            
+            else:
+                self.seq.append(Riscv.Binary(instr.op, instr.dst, instr.lhs, instr.rhs))
 
         def visitCondBranch(self, instr: CondBranch) -> None:
             self.seq.append(Riscv.Branch(instr.cond, instr.label))
