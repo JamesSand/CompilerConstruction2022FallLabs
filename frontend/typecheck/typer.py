@@ -13,6 +13,10 @@ from utils.error import *
 The typer phase: type check abstract syntax tree.
 """
 
+# symbol check
+# scan AST tree and complete their task 
+# from step 1 - 10, minidecaf only has type Int, do not need type check 
+
 
 class Typer(Visitor[ScopeStack, None]):
     def __init__(self) -> None:

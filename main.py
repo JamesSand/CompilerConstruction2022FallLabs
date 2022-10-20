@@ -31,15 +31,17 @@ def readCode(fileName):
 
 # The parser stage: MiniDecaf code -> Abstract syntax tree
 def step_parse(args: argparse.Namespace):
-    code = readCode(args.input)
-    r: Program = parser.parse(code, lexer=lexer)
+    code = readCode(args.input) # read original code
+    # parser pase token stream to AST
+    r: Program = parser.parse(code, lexer=lexer) # return the root of AST
 
-    errors = parser.error_stack
+    errors = parser.error_stack # check if parser has any errors
     if errors:
         print("\n".join(map(str, errors)), file=sys.stderr)
         exit(1)
 
     return r
+    # in summary, code -> token stram -> AST tree
 
 
 # IR generation stage: Abstract syntax tree -> Three-address code

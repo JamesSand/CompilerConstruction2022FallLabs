@@ -20,6 +20,7 @@ reserved = {
     "break": "Break",
 }
 
+# token defined here
 t_Semi = ";"
 
 t_LParen = "("
@@ -50,7 +51,7 @@ t_Greater = ">"
 t_GreaterEqual = ">="
 t_Assign = "="
 
-
+# operation on token
 def t_Integer(t):
     r"[0-9]+"  # can be accessed from `t_Interger.__doc__`
     t.value = int(t.value)

@@ -18,13 +18,15 @@ from utils.riscv import MAX_INT
 The namer phase: resolve all symbols defined in the abstract syntax tree and store them in symbol tables (i.e. scopes).
 """
 
+# construct symbol table
 
-class Namer(Visitor[ScopeStack, None]):
+
+class Namer(Visitor[ScopeStack, None]): # basic class of any AST scanner
     def __init__(self) -> None:
         pass
 
     # Entry of this phase
-    def transform(self, program: Program) -> Program:
+    def transform(self, program: Program) -> Program: # entrance of the scan
         # Global scope. You don't have to consider it until Step 9.
         program.globalScope = GlobalScope
         ctx = ScopeStack(program.globalScope)
@@ -37,17 +39,19 @@ class Namer(Visitor[ScopeStack, None]):
         if not program.hasMainFunc():
             raise DecafNoMainFuncError
 
+        # if have main function, then visit main function 
         program.mainFunc().accept(self, ctx)
 
     def visitFunction(self, func: Function, ctx: ScopeStack) -> None:
-        func.body.accept(self, ctx)
+        func.body.accept(self, ctx) # then visit the block of the function, recursively
 
     def visitBlock(self, block: Block, ctx: ScopeStack) -> None:
+        # a function block is constructed by several sentence, we should visit all of them
         for child in block:
             child.accept(self, ctx)
 
     def visitReturn(self, stmt: Return, ctx: ScopeStack) -> None:
-        stmt.expr.accept(self, ctx)
+        stmt.expr.accept(self, ctx) # deal with the expression of return 
 
         """
         def visitFor(self, stmt: For, ctx: ScopeStack) -> None:
@@ -98,18 +102,53 @@ class Namer(Visitor[ScopeStack, None]):
         3. Set the 'symbol' attribute of decl.
         4. If there is an initial value, visit it.
         """
-        pass
+        # def __getitem__(self, key: int) -> Node:
+        #   return (self.var_t, self.ident, self.init_expr)[key]
+
+        # you have to read the defination carefully 
+        name = decl.ident.value
+        type = decl.var_t.type
+        init_expr = decl.init_expr
+
+        conflict_result = ctx.findConflict(name)
+        if conflict_result:
+            # conflict 
+            raise DecafDeclConflictError(name)
+        else:
+            # no conflict
+            new_decalre = VarSymbol(name, type)
+            ctx.declare(new_decalre)
+            # decl.ident.setattr('symbol', new_decalre)
+            decl.setattr('symbol', new_decalre)
+            
+            # init value
+            if not init_expr is NULL:
+                # have init value, visit it 
+                init_expr.accept(self, ctx)
+
+
 
     def visitAssignment(self, expr: Assignment, ctx: ScopeStack) -> None:
         """
         1. Refer to the implementation of visitBinary.
         """
-        pass
+        # lookup_result = ctx.lookup(expr.lhs)
+        # if lookup_result:
+        #     # has declared
+        #     raise DecafDeclConflictError(expr.lhs)
+        # else:
+        #     expr.lhs.accept(self, ctx)
+        #     expr.rhs.accept(self, ctx)
+
+        expr.lhs.accept(self, ctx)
+        expr.rhs.accept(self, ctx)
+            
 
     def visitUnary(self, expr: Unary, ctx: ScopeStack) -> None:
         expr.operand.accept(self, ctx)
 
     def visitBinary(self, expr: Binary, ctx: ScopeStack) -> None:
+        # since Binary have to operand, we have to visit all of them
         expr.lhs.accept(self, ctx)
         expr.rhs.accept(self, ctx)
 
@@ -125,9 +164,17 @@ class Namer(Visitor[ScopeStack, None]):
         2. If it has not been declared, raise a DecafUndefinedVarError.
         3. Set the 'symbol' attribute of ident.
         """
-        pass
+        # name = str(ident)
+        name = ident.value
+        lookup_result = ctx.lookup(name)
+        if lookup_result is NULL:
+            # not declare
+            raise DecafUndefinedVarError(name)
+        else:
+            # declared
+            ident.setattr('symbol', lookup_result)
 
     def visitIntLiteral(self, expr: IntLiteral, ctx: ScopeStack) -> None:
         value = expr.value
-        if value > MAX_INT:
+        if value > MAX_INT: # check if the Int may overflow
             raise DecafBadIntValueError(value)

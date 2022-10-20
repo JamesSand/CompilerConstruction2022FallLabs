@@ -57,7 +57,7 @@ def p_function_def(p):
     """
     function : type Identifier LParen RParen LBrace block RBrace
     """
-    p[0] = Function(p[1], p[2], p[6])
+    p[0] = Function(p[1], p[2], p[6]) # choose from right side accroding to Function() init
 
 
 def p_block(p):
@@ -266,5 +266,5 @@ def p_error(t):
     return parser.token()
 
 
-parser = yacc.yacc(start="program")
+parser = yacc.yacc(start="program") # program is the root of AST
 parser.error_stack = error_stack  # type: ignore

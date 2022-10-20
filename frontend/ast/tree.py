@@ -4,6 +4,8 @@ Reading this file to grasp the basic method of defining a new AST node is recomm
 Modify this file if you want to add a new AST node.
 """
 
+# actual AST node, derive from node.py
+
 from __future__ import annotations
 
 from typing import Any, Generic, Optional, TypeVar, Union

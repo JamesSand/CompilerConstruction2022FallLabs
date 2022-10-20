@@ -67,5 +67,5 @@ def _intlit_into_node(f):
 
 t_Integer = _intlit_into_node(t_Integer)
 
-lexer = lex.lex()
+lexer = lex.lex() # original code -> token stream 
 lexer.error_stack = error_stack  # type: ignore

@@ -4,6 +4,8 @@ base class `Node` of all AST nodes,
 and a helper type `NullType` along with its instance `NULL`.
 """
 
+# base class declaration in AST tree
+
 from __future__ import annotations
 
 from abc import ABC, abstractmethod

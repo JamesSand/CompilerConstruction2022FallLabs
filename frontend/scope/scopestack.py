@@ -16,6 +16,10 @@ A typical full scope stack looks like the following:
     GlobalScope -- stack bottom, which is always the global scope
 """
 
+# a stake of scope
+# when call a function, it will have a local scope 
+# Global scope always at the buttom 
+
 
 class ScopeStackOverflow(Exception):
     ...
@@ -59,13 +63,13 @@ class ScopeStack:
         self.currentScope().declare(symbol)
 
     # To find if there is a name conflict in the current scope.
-    def findConflict(self, name: str) -> Optional[Symbol]:
+    def findConflict(self, name: str) -> Optional[Symbol]: # only in current scope to find conflict
         if self.currentScope().containsKey(name):
             return self.currentScope().get(name)
         return None
 
     # To find the symbol via name from top to bottom.
-    def lookup(self, name: str) -> Optional[Symbol]:
+    def lookup(self, name: str) -> Optional[Symbol]: # we wanna to use it, find in all scope gradually
         stackSize = len(self.stack)
         for d in range(stackSize - 1, -1, -1):
             scope = self.stack[d]
@@ -74,7 +78,7 @@ class ScopeStack:
         return None
 
     # Maintaining the number of loops at current position (to check if a 'break' or 'continue' is valid).
-    def openLoop(self) -> None:
+    def openLoop(self) -> None: # how many loop we are in, use for break and continue sentence 
         self.loopDepth += 1
 
     def closeLoop(self) -> None:
