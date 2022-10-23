@@ -137,7 +137,8 @@ class If(Statement):
     """
 
     def __init__(
-        self, cond: Expression, then: Statement, otherwise: Optional[Statement] = None
+        self, cond: Expression, then: Statement, otherwise: Optional[Statement] = None # Optional [T] 
+        # vector <template>
     ) -> None:
         super().__init__("if")
         self.cond = cond

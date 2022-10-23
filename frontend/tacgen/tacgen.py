@@ -52,6 +52,8 @@ class TACGen(Visitor[FuncVisitor, None]):
         temp = symbol.temp
         ident.setattr("val", temp)
 
+        # 先给 a 一个 虚拟寄存器
+
     def visitDeclaration(self, decl: Declaration, mv: FuncVisitor) -> None:
         """
         1. Get the 'symbol' attribute of decl.
@@ -62,9 +64,9 @@ class TACGen(Visitor[FuncVisitor, None]):
         new_var.temp = mv.freshTemp()
         init_expr = decl.init_expr
         if not init_expr is NULL:
-            init_expr.accept(self, mv)
-            value = init_expr.getattr("val")
-            mv.visitAssignment(new_var.temp, value)
+            init_expr.accept(self, mv) # 翻译成三地址码指令
+            value = init_expr.getattr("val") # 所有表达式都有一个值，三地址码左边的虚拟寄存器是 val
+            mv.visitAssignment(new_var.temp, value) # 生成了一条三地址码的赋值语句
 
     def visitAssignment(self, expr: Assignment, mv: FuncVisitor) -> None:
         """
@@ -72,19 +74,28 @@ class TACGen(Visitor[FuncVisitor, None]):
         2. Use mv.visitAssignment to emit an assignment instruction.
         3. Set the 'val' attribute of expr as the value of assignment instruction.
         """
+
+        # a = b = 1
+        # 表达式的返回值是 左值的值
+
         expr.lhs.accept(self, mv)
         expr.rhs.accept(self, mv)
         
         temp = expr.lhs.getattr("val")
+
+        # 右边的值赋给左边
+        # 左边的值赋给表达式
 
         assign_result = mv.visitAssignment(temp, expr.rhs.getattr("val"))
 
         expr.setattr("val", assign_result)
 
     def visitIf(self, stmt: If, mv: FuncVisitor) -> None:
+        # visiti condition
         stmt.cond.accept(self, mv)
 
         if stmt.otherwise is NULL:
+            # only have a if, do not have an else
             skipLabel = mv.freshLabel()
             mv.visitCondBranch(
                 tacop.CondBranchOp.BEQ, stmt.cond.getattr("val"), skipLabel
@@ -92,15 +103,23 @@ class TACGen(Visitor[FuncVisitor, None]):
             stmt.then.accept(self, mv)
             mv.visitLabel(skipLabel)
         else:
+            # have an else
+            # define two labels, exit label for then, exitlabel for otherwise
             skipLabel = mv.freshLabel()
             exitLabel = mv.freshLabel()
+            # add beq instruction
             mv.visitCondBranch(
                 tacop.CondBranchOp.BEQ, stmt.cond.getattr("val"), skipLabel
             )
+            # visit then expression
             stmt.then.accept(self, mv)
+            # add exit label to then branch
             mv.visitBranch(exitLabel)
+            # add skip label
             mv.visitLabel(skipLabel)
+            # visit otherwise
             stmt.otherwise.accept(self, mv)
+            # add exit label
             mv.visitLabel(exitLabel)
 
     def visitWhile(self, stmt: While, mv: FuncVisitor) -> None:
@@ -170,7 +189,38 @@ class TACGen(Visitor[FuncVisitor, None]):
         """
         1. Refer to the implementation of visitIf and visitBinary.
         """
-        pass
+        # # similary as 
+        # # a = cond ? then : otherwise
+
+        # visit condition
+        expr.cond.accept(self, mv)
+        # expr.then.accept(self, mv)
+        # expr.otherwise.accept(self, mv)
+
+        # have an else
+        skipLabel = mv.freshLabel()
+        exitLabel = mv.freshLabel()
+        # ?
+        mv.visitCondBranch(
+            tacop.CondBranchOp.BEQ, expr.cond.getattr("val"), skipLabel
+        )
+        expr.then.accept(self, mv)
+
+        expr.setattr("val", expr.then.getattr("val"))
+
+        mv.visitBranch(exitLabel) # jump exit
+
+        mv.visitLabel(skipLabel)
+        
+        expr.otherwise.accept(self, mv)
+        # mv.visitLabel(exitLabel)
+
+        expr.setattr("val", expr.otherwise.getattr("val"))
+
+        mv.visitLabel(exitLabel)
+
+        
+        
 
     def visitIntLiteral(self, expr: IntLiteral, mv: FuncVisitor) -> None:
         expr.setattr("val", mv.visitLoad(expr.value))

@@ -20,6 +20,10 @@ The namer phase: resolve all symbols defined in the abstract syntax tree and sto
 
 # construct symbol table
 
+# 构建符号
+# 作用于屏蔽
+# 名字查找
+
 
 class Namer(Visitor[ScopeStack, None]): # basic class of any AST scanner
     def __init__(self) -> None:
@@ -140,8 +144,11 @@ class Namer(Visitor[ScopeStack, None]): # basic class of any AST scanner
         #     expr.lhs.accept(self, ctx)
         #     expr.rhs.accept(self, ctx)
 
-        expr.lhs.accept(self, ctx)
+        # a[++i] = ++i;
+
         expr.rhs.accept(self, ctx)
+        expr.lhs.accept(self, ctx)
+        
             
 
     def visitUnary(self, expr: Unary, ctx: ScopeStack) -> None:
@@ -156,7 +163,13 @@ class Namer(Visitor[ScopeStack, None]): # basic class of any AST scanner
         """
         1. Refer to the implementation of visitBinary.
         """
-        pass
+
+        # a = t ? b : c
+
+        expr.cond.accept(self, ctx)
+        expr.then.accept(self, ctx)
+
+        expr.otherwise.accept(self, ctx)
 
     def visitIdentifier(self, ident: Identifier, ctx: ScopeStack) -> None:
         """
@@ -172,6 +185,7 @@ class Namer(Visitor[ScopeStack, None]): # basic class of any AST scanner
             raise DecafUndefinedVarError(name)
         else:
             # declared
+            # 所有作用域都在 namer 中使用并销毁
             ident.setattr('symbol', lookup_result)
 
     def visitIntLiteral(self, expr: IntLiteral, ctx: ScopeStack) -> None:
