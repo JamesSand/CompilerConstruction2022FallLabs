@@ -1,10 +1,10 @@
 #! /bin/bash
 
-"""
-Usage: [TEST_PATH=<path>] ./test-parser-stage.sh
+# """
+# Usage: [TEST_PATH=<path>] ./test-parser-stage.sh
 
-    TEST_PATH: path to minidecaf-tests
-"""
+#     TEST_PATH: path to minidecaf-tests
+# """
 
 default_path="./minidecaf-tests"
 testpath=${TEST_PATH:-$default_path}
@@ -24,7 +24,7 @@ test_parse() {
 
             [ ! -d $errpath ] && mkdir -p $errpath
 
-            if ! python main.py --input $filepath --parse > /dev/null 2> $errfile; then
+            if ! python3.9 main.py --input $filepath --parse > /dev/null 2> $errfile; then
                 echo "parser test failed for $filepath"
                 echo "error message saved in $errfile"
                 echo
