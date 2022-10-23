@@ -106,8 +106,6 @@ class Namer(Visitor[ScopeStack, None]): # basic class of any AST scanner
         3. Set the 'symbol' attribute of decl.
         4. If there is an initial value, visit it.
         """
-        # def __getitem__(self, key: int) -> Node:
-        #   return (self.var_t, self.ident, self.init_expr)[key]
 
         # you have to read the defination carefully 
         name = decl.ident.value
@@ -136,15 +134,11 @@ class Namer(Visitor[ScopeStack, None]): # basic class of any AST scanner
         """
         1. Refer to the implementation of visitBinary.
         """
-        # lookup_result = ctx.lookup(expr.lhs)
-        # if lookup_result:
-        #     # has declared
-        #     raise DecafDeclConflictError(expr.lhs)
-        # else:
-        #     expr.lhs.accept(self, ctx)
-        #     expr.rhs.accept(self, ctx)
 
+        # minidecaf 不用考虑左右访问顺序
         # a[++i] = ++i;
+
+        # 构建符号，访问即可
 
         expr.rhs.accept(self, ctx)
         expr.lhs.accept(self, ctx)
@@ -165,10 +159,10 @@ class Namer(Visitor[ScopeStack, None]): # basic class of any AST scanner
         """
 
         # a = t ? b : c
+        # since cond_expr must have a otherwise branch
 
         expr.cond.accept(self, ctx)
         expr.then.accept(self, ctx)
-
         expr.otherwise.accept(self, ctx)
 
     def visitIdentifier(self, ident: Identifier, ctx: ScopeStack) -> None:
@@ -185,8 +179,10 @@ class Namer(Visitor[ScopeStack, None]): # basic class of any AST scanner
             raise DecafUndefinedVarError(name)
         else:
             # declared
-            # 所有作用域都在 namer 中使用并销毁
-            ident.setattr('symbol', lookup_result)
+            # 所有作用域都在 namer 中使用并销毁，namer 结束之后，作用域的歧义将被消除
+            # 由于 tacgen 会给以每个变量分配一个虚拟寄存器，
+            # 所以需要将 varsymbol 挂载到 Identifier 上 
+            ident.setattr('symbol', lookup_result) 
 
     def visitIntLiteral(self, expr: IntLiteral, ctx: ScopeStack) -> None:
         value = expr.value

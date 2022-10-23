@@ -50,6 +50,7 @@ class TACGen(Visitor[FuncVisitor, None]):
         """
         symbol = ident.getattr("symbol")
         temp = symbol.temp
+        # Identifier 的挂载和 Declaration 的挂载一致
         ident.setattr("val", temp)
 
         # 先给 a 一个 虚拟寄存器
@@ -80,14 +81,13 @@ class TACGen(Visitor[FuncVisitor, None]):
 
         expr.lhs.accept(self, mv)
         expr.rhs.accept(self, mv)
-        
-        temp = expr.lhs.getattr("val")
 
         # 右边的值赋给左边
         # 左边的值赋给表达式
 
-        assign_result = mv.visitAssignment(temp, expr.rhs.getattr("val"))
+        assign_result = mv.visitAssignment(expr.lhs.getattr("val"), expr.rhs.getattr("val"))
 
+        # expression 的 val 是左值的 虚拟寄存器
         expr.setattr("val", assign_result)
 
     def visitIf(self, stmt: If, mv: FuncVisitor) -> None:
@@ -115,11 +115,10 @@ class TACGen(Visitor[FuncVisitor, None]):
             stmt.then.accept(self, mv)
             # add exit label to then branch
             mv.visitBranch(exitLabel)
-            # add skip label
+
             mv.visitLabel(skipLabel)
-            # visit otherwise
             stmt.otherwise.accept(self, mv)
-            # add exit label
+
             mv.visitLabel(exitLabel)
 
     def visitWhile(self, stmt: While, mv: FuncVisitor) -> None:
@@ -189,33 +188,29 @@ class TACGen(Visitor[FuncVisitor, None]):
         """
         1. Refer to the implementation of visitIf and visitBinary.
         """
-        # # similary as 
-        # # a = cond ? then : otherwise
+        # a = cond ? then : otherwise
+
+        skipLabel = mv.freshLabel()
+        exitLabel = mv.freshLabel()
+        temp = mv.freshTemp()
+        expr.setattr("val", temp)
 
         # visit condition
         expr.cond.accept(self, mv)
-        # expr.then.accept(self, mv)
-        # expr.otherwise.accept(self, mv)
-
-        # have an else
-        skipLabel = mv.freshLabel()
-        exitLabel = mv.freshLabel()
-        # ?
         mv.visitCondBranch(
             tacop.CondBranchOp.BEQ, expr.cond.getattr("val"), skipLabel
         )
+
         expr.then.accept(self, mv)
+        
+        mv.visitAssignment(temp, expr.then.getattr("val"))
 
-        expr.setattr("val", expr.then.getattr("val"))
-
-        mv.visitBranch(exitLabel) # jump exit
+        mv.visitBranch(exitLabel) # jump to exit
 
         mv.visitLabel(skipLabel)
-        
         expr.otherwise.accept(self, mv)
-        # mv.visitLabel(exitLabel)
 
-        expr.setattr("val", expr.otherwise.getattr("val"))
+        mv.visitAssignment(temp, expr.otherwise.getattr("val"))
 
         mv.visitLabel(exitLabel)
 
