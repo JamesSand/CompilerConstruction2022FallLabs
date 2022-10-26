@@ -202,14 +202,11 @@ class TACGen(Visitor[FuncVisitor, None]):
         )
 
         expr.then.accept(self, mv)
-        
         mv.visitAssignment(temp, expr.then.getattr("val"))
-
         mv.visitBranch(exitLabel) # jump to exit
 
         mv.visitLabel(skipLabel)
         expr.otherwise.accept(self, mv)
-
         mv.visitAssignment(temp, expr.otherwise.getattr("val"))
 
         mv.visitLabel(exitLabel)
