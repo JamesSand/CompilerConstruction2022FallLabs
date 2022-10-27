@@ -241,7 +241,6 @@ def p_expression(self: Parser) -> Expression:
     """
     return p_assignment(self)
 
-
 @first("If", "Return", "Semi", *p_expression.first)
 def p_statement(self: Parser) -> Statement:
     "statement : if | return | ( expression )? ';'"
