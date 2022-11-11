@@ -188,10 +188,10 @@ class TACGen(Visitor[FuncVisitor, None]):
 
         stmt.body.accept(self, mv)
 
+        mv.visitLabel(loopLabel)
+
         if not isinstance(stmt.update, node.NullType):
             stmt.update.accept(self, mv)
-
-        mv.visitLabel(loopLabel)
         mv.visitBranch(beginLabel)
         
         mv.visitLabel(breakLabel)
