@@ -51,8 +51,17 @@ class Namer(Visitor[ScopeStack, None]): # basic class of any AST scanner
 
     def visitBlock(self, block: Block, ctx: ScopeStack) -> None:
         # a function block is constructed by several sentence, we should visit all of them
+        
+        # we have to define a scope for each block 
+
+        # open a scope here
+        ctx.open(Scope(ScopeKind.LOCAL))
+
         for child in block:
             child.accept(self, ctx)
+
+        # close the scope
+        ctx.close()
 
     def visitReturn(self, stmt: Return, ctx: ScopeStack) -> None:
         stmt.expr.accept(self, ctx) # deal with the expression of return 

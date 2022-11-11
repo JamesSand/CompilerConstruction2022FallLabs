@@ -40,6 +40,11 @@ class BruteRegAlloc(RegAlloc):
         for bb in graph.iterator():
             # you need to think more here
             # maybe we don't need to alloc regs for all the basic blocks
+
+            # if this block is unreachable, then skip it
+            if graph.unreachable(bb):
+                continue
+
             if bb.label is not None:
                 subEmitter.emitLabel(bb.label)
             self.localAlloc(bb, subEmitter)
