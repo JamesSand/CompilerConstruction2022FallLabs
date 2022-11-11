@@ -53,7 +53,6 @@ class Namer(Visitor[ScopeStack, None]): # basic class of any AST scanner
         # a function block is constructed by several sentence, we should visit all of them
         
         # we have to define a scope for each block 
-
         # open a scope here
         ctx.open(Scope(ScopeKind.LOCAL))
 
@@ -98,6 +97,30 @@ class Namer(Visitor[ScopeStack, None]): # basic class of any AST scanner
         3. Close the loop.
         4. Visit the condition of the loop.
         """
+
+    def visitDoWhile(self, stmt: DoWhile, ctx: ScopeStack) -> None:
+        ctx.openLoop()
+        stmt.body.accept(self, ctx)
+        ctx.closeLoop()
+        stmt.cond.accept(self, ctx)
+
+    def visitFor(self, stmt: For, ctx: ScopeStack) -> None:
+        for_scope = Scope(ScopeKind.LOCAL)
+        ctx.open(for_scope)
+        stmt.init.accept(self, ctx)
+        stmt.cond.accept(self, ctx)
+        stmt.update.accept(self, ctx)
+        
+        ctx.openLoop()
+        stmt.body.accept(self, ctx)
+        ctx.closeLoop()
+
+        ctx.close()
+
+
+    def visitContinue(self, stmt: Continue, ctx: ScopeStack) -> None:
+        if not ctx.inLoop():
+            raise DecafContinueOutsideLoopError()
 
     def visitBreak(self, stmt: Break, ctx: ScopeStack) -> None:
         if not ctx.inLoop():
