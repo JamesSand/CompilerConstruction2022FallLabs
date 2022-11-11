@@ -51,13 +51,13 @@ class CFG:
         
         # Implement dfs here
         stack = []
-        stack.append(self.nodes[0])
+        stack.append(0)
         have_searched_list = []
         have_searched_list.append(0)
 
         while stack:
             current = stack.pop()
-            nodes = self.getSucc(current)
+            nodes = list(self.getSucc(current))
             for i in nodes[::-1]: # since the last in stach, will be poped first, therefore need reverse here
                 if i not in have_searched_list:
                     stack.append(i)
