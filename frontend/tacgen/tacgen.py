@@ -43,15 +43,18 @@ class TACGen(Visitor[FuncVisitor, None]):
             mv : FuncVisitor = pw.visitFunc(funct_name, parameter_num)
 
             funct_symbol : FuncSymbol = funct.getattr("symbol")
+            # breakpoint()
 
             # visit parameter list
             for parameter in parameter_list:
-                parameter_temp = mv.freshTemp()
+                parameter_temp = parameter.accept(self, mv)
+                # record which temps are need by this function
                 funct_symbol.add_parameter_temp(parameter_temp)
 
-            
-
             # visit body
+            # breakpoint()
+            funct.body.accept(self, mv)
+            mv.visitEnd()
 
         # here we can visit main in the end
         mainFunc = program.mainFunc()
@@ -312,8 +315,24 @@ class TACGen(Visitor[FuncVisitor, None]):
         expr.setattr("val", mv.visitLoad(expr.value))
 
 
-    def visitParameter(self, parameter: Parameter, mv: FuncVisitor) -> None:
-        pass
+    def visitParameter(self, parameter: Parameter, mv: FuncVisitor) -> Temp:
+        # allocate a temp for this parameter
+        parameter_temp = mv.freshTemp()
+        parameter_symbol = parameter.getattr("symbol")
+        parameter_symbol.temp = parameter_temp
+        return parameter_temp
 
     def visitCall(self, call : Call, mv: FuncVisitor) -> None:
-        pass
+        argument_list = call.argument_list
+        for argument in argument_list:
+            # allocate temp for each argument, expression in actual
+            argument.accept(self, mv)
+            # use param to declare arguments
+            argument_temp = argument.getattr("val")
+            mv.visitParameter(argument_temp)
+
+        # call the function
+        funct_name = call.ident.value
+        call_result_temp = mv.visitCall(funct_name)
+        call.setattr("val", call_result_temp)
+        

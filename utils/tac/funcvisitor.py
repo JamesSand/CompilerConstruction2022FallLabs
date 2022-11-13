@@ -109,10 +109,13 @@ class FuncVisitor:
         return self.continueLabelStack[-1]
 
     # step 9 codes here
-    # def visitParameter(self) -> Optional[U]:
-    #     # TODO
-    #     pass
+    def visitParameter(self, argument_temp : Temp) -> None:
+        self.func.add(Param(argument_temp))
 
-    def visitCall(self, that: Call, ctx: T) -> Optional[U]:
-        # TODO
-        pass
+    def visitCall(self, funct_name : str) -> Temp:
+        # return the function result
+        call_result_temp = self.freshTemp()
+        funct_label = self.ctx.getFuncLabel(funct_name)
+        self.func.add(Call(call_result_temp, funct_label))
+        return call_result_temp
+

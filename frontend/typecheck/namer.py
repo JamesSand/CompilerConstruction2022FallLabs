@@ -57,13 +57,16 @@ class Namer(Visitor[ScopeStack, None]): # basic class of any AST scanner
         # check if it has declared
         funct_name = func.ident.value
         funct_type = func.ret_t.type
-        if ctx.findConflict(funct_name):
+        if ctx.globalscope.containsKey(funct_name):
             raise DecafDeclConflictError(funct_name)
 
         # declare the function
         funct_scope = Scope(ScopeKind.LOCAL)
         funct_symbol = FuncSymbol(funct_name, funct_type, funct_scope)
-        ctx.declare(funct_symbol)
+        func.setattr("symbol", funct_symbol)
+        ctx.globalscope.declare(funct_symbol)
+
+        ctx.open(funct_scope)
 
         # visit its parameters
         parameter_list = func.parameter_list
@@ -72,6 +75,8 @@ class Namer(Visitor[ScopeStack, None]): # basic class of any AST scanner
 
         # visit its body
         func.body.accept(self, ctx) # then visit the block of the function, recursively
+
+        ctx.close()
 
     def visitBlock(self, block: Block, ctx: ScopeStack) -> None:
         # a function block is constructed by several sentence, we should visit all of them
@@ -252,12 +257,15 @@ class Namer(Visitor[ScopeStack, None]): # basic class of any AST scanner
         param_name = parameter.ident.value
         param_type = parameter.var_t.type
 
-        if ctx.findConflict(param_name):
+        conflict = ctx.findConflict(param_name)
+        if conflict:
+            # breakpoint()
             raise DecafDeclConflictError(param_name)
 
         # if no conflict, define a symbol for it and attach it on ast tree
         param_symbol = VarSymbol(param_name, param_type)
         parameter.setattr("symbol", param_symbol)
+        ctx.declare(param_symbol)
         
 
     def visitCall(self, call: Call, ctx: ScopeStack) -> None:

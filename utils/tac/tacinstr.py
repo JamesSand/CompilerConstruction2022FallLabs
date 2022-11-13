@@ -205,7 +205,7 @@ class Mark(TACInstr):
 
 
 # step 9 codes here
-class PARM(TACInstr):
+class Param(TACInstr):
     def __init__(self, parameter: Temp) -> None:
         super().__init__(InstrKind.SEQ, [], [parameter], None)
         self.parameter = parameter
@@ -216,13 +216,14 @@ class PARM(TACInstr):
     def accept(self, v: TACVisitor) -> None:
         return v.visitParameter(self)
 
-class CALL(TACInstr):
-    def __init__(self, target: Label) -> None:
-        super().__init__(InstrKind.JMP, [], [], target)
+class Call(TACInstr):
+    def __init__(self,result : Temp, target: Label) -> None:
+        super().__init__(InstrKind.SEQ, [result], [], target)
+        self.result = result
         self.target = target
 
     def __str__(self) -> str:
-        return "CALL %s" % str(self.target)
+        return "%s = CALL %s" % (str(self.result), str(self.target))
 
     def accept(self, v: TACVisitor) -> None:
         v.visitCall(self)
