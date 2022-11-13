@@ -38,26 +38,63 @@ def p_empty(p: yacc.YaccProduction):
     """
     pass
 
-
-def p_program(p):
-    """
-    program : function
-    """
-    p[0] = Program(p[1])
-
-
 def p_type(p):
     """
     type : Int
     """
     p[0] = TInt()
 
+def p_program(p):
+    """
+    program : function_list
+    """
+    p[0] = Program(p[1])
 
-def p_function_def(p):
+
+# step 9 codes here
+def p_function_list(p):
     """
-    function : type Identifier LParen RParen LBrace block RBrace
+    function_list : function function_list
     """
-    p[0] = Function(p[1], p[2], p[6]) # choose from right side accroding to Function() init
+    p[0] = [p[1]] + p[2]
+
+def p_function_empty(p):
+    """
+    function_list : empty
+    """
+    # here must be empty list, not None
+    p[0] = []
+
+def p_function(p):
+    """
+    function : type Identifier LParen parameter_list RParen LBrace block RBrace
+    """
+    p[0] = Function(p[1], p[2], p[4], p[7]) # choose from right side accroding to Function() init
+
+def p_parameter_list(p):
+    """
+    parameter_list : parameter Comma parameter_list
+    """
+    p[0] = [p[1]] + p[3]
+
+def p_parameter_list_singal(p):
+    """
+    parameter_list : parameter
+    """
+    p[0] = [p[1]]
+
+def p_parameter_list_empty(p):
+    """
+    parameter_list : empty
+    """
+    p[0] = []
+
+def p_parameter(p):
+    """
+    parameter : type Identifier
+    """
+    p[0] = Parameter(p[1], p[2])
+
 
 
 def p_block(p):
@@ -195,6 +232,23 @@ def p_declaration_init(p):
     """
     p[0] = Declaration(p[1], p[2], p[4])
 
+def p_expression_list(p):
+    """
+    expression_list : expression Comma expression_list 
+    """
+    p[0] = [p[1]] + p[3]
+
+def p_expression_list_singal(p):
+    """
+    expression_list : expression
+    """
+    p[0] = [p[1]]
+
+def p_expression_list_expty(p):
+    """
+    expression_list : empty
+    """
+    p[0] = []
 
 def p_expression_precedence(p):
     """
@@ -215,6 +269,11 @@ def p_expression_precedence(p):
     """
     p[0] = p[1]
 
+def p_postfix(p):
+    """
+    postfix : Identifier LParen expression_list RParen
+    """
+    p[0] = Call(p[1], p[3])
 
 def p_unary_expression(p):
     """

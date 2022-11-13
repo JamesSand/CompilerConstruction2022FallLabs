@@ -77,22 +77,25 @@ class Function(Node):
         self,
         ret_t: TypeLiteral,
         ident: Identifier,
+        parameter_list : list[Parameter],
         body: Block,
     ) -> None:
         super().__init__("function")
         self.ret_t = ret_t
         self.ident = ident
+        self.parameter_list = parameter_list
         self.body = body
 
     def __getitem__(self, key: int) -> Node:
         return (
-            self.ret_t,
-            self.ident,
-            self.body,
+            [self.ret_t] +
+            [self.ident] +
+            self.parameter_list +
+            [self.body]
         )[key]
 
     def __len__(self) -> int:
-        return 3
+        return 3 + len(self.parameter_list)
 
     def accept(self, v: Visitor[T, U], ctx: T):
         return v.visitFunction(self, ctx)
@@ -488,3 +491,51 @@ class TInt(TypeLiteral):
 
     def accept(self, v: Visitor[T, U], ctx: T):
         return v.visitTInt(self, ctx)
+
+# step9 codes below
+
+class Parameter(Node):
+    """
+    AST node for a parameter
+    """
+    def __init__(
+        self,
+        var_t: TypeLiteral,
+        ident: Identifier
+    ) -> None:
+        super().__init__("parameter")
+        self.var_t = var_t
+        self.ident = ident
+
+    def __getitem__(self, key: int) -> Node:
+        return (self.var_t, self.ident)[key]
+
+    def __len__(self) -> int:
+        return 2
+
+    def accept(self, v: Visitor[T, U], ctx: T):
+        return v.visitParameter(self, ctx)
+
+
+class Call(Expression):
+    """
+    AST node for function call
+    """
+    def __init__(
+        self,
+        ident: Identifier,
+        argument_list : list[Expression]
+    ) -> None:
+        super().__init__("call")
+        self.ident = ident
+        self.argument_list = argument_list
+
+    def __getitem__(self, key: int) -> Node:
+        return ([self.ident] + self.argument_list)[key]
+
+    def __len__(self) -> int:
+        return len(self.argument_list) + 1
+
+    def accept(self, v: Visitor[T, U], ctx: T):
+        return v.visitCall(self, ctx)
+
