@@ -107,3 +107,12 @@ class FuncVisitor:
     # To get the label for 'continue' in the current loop.
     def getContinueLabel(self) -> Label:
         return self.continueLabelStack[-1]
+
+    # step 9 codes here
+    # def visitParameter(self) -> Optional[U]:
+    #     # TODO
+    #     pass
+
+    def visitCall(self, that: Call, ctx: T) -> Optional[U]:
+        # TODO
+        pass

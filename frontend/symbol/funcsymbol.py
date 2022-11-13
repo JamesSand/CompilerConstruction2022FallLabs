@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from frontend.scope.scope import Scope
 
+from utils.tac.temp import Temp
+
 from .symbol import *
 
 """
@@ -15,6 +17,8 @@ class FuncSymbol(Symbol):
         self.scope = scope
         self.para_type = []
 
+        self.parameter_temp = []
+
     def __str__(self) -> str:
         return "function %s : %s" % (self.name, str(self.type))
 
@@ -25,6 +29,9 @@ class FuncSymbol(Symbol):
     # To add the type of a parameter. In fact, parameters can only be 'int' in MiniDecaf.
     def addParaType(self, type: DecafType) -> None:
         self.para_type.append(type)
+
+    def add_parameter_temp(self, temp : Temp):
+        self.parameter_temp.append(temp)
 
     # To get the parameter number of a function symbol.
     @property

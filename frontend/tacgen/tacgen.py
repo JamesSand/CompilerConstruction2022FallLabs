@@ -10,6 +10,8 @@ from utils.tac.programwriter import ProgramWriter
 from utils.tac.tacprog import TACProg
 from utils.tac.temp import Temp
 
+from frontend.symbol.funcsymbol import FuncSymbol
+
 """
 The TAC generation phase: translate the abstract syntax tree into three-address code.
 """
@@ -21,8 +23,39 @@ class TACGen(Visitor[FuncVisitor, None]):
 
     # Entry of this phase
     def transform(self, program: Program) -> TACProg:
+        
+
+        function_dict : dict [str , Function]= program.functions()
+
+        funct_name_list = []
+        for funct_name, funct in function_dict.items():
+            funct_name_list.append(funct_name)
+
+        pw = ProgramWriter(funct_name_list)
+
+        for funct_name, funct in function_dict.items():
+            if funct_name == "main":
+                continue
+
+            # open a function visitor
+            parameter_list = funct.parameter_list
+            parameter_num = len(parameter_list)
+            mv : FuncVisitor = pw.visitFunc(funct_name, parameter_num)
+
+            funct_symbol : FuncSymbol = funct.getattr("symbol")
+
+            # visit parameter list
+            for parameter in parameter_list:
+                parameter_temp = mv.freshTemp()
+                funct_symbol.add_parameter_temp(parameter_temp)
+
+            
+
+            # visit body
+
+        # here we can visit main in the end
         mainFunc = program.mainFunc()
-        pw = ProgramWriter(["main"])
+        
         # The function visitor of 'main' is special.
         mv = pw.visitMainFunc()
 
@@ -277,3 +310,10 @@ class TACGen(Visitor[FuncVisitor, None]):
 
     def visitIntLiteral(self, expr: IntLiteral, mv: FuncVisitor) -> None:
         expr.setattr("val", mv.visitLoad(expr.value))
+
+
+    def visitParameter(self, parameter: Parameter, mv: FuncVisitor) -> None:
+        pass
+
+    def visitCall(self, call : Call, mv: FuncVisitor) -> None:
+        pass

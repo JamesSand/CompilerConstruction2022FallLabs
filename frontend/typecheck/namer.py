@@ -43,10 +43,34 @@ class Namer(Visitor[ScopeStack, None]): # basic class of any AST scanner
         if not program.hasMainFunc():
             raise DecafNoMainFuncError
 
+        # get all functions
+        function_dict = program.functions()
+        for funct_name, funct in function_dict.items():
+            # visit each function
+            funct.accept(self, ctx)
+        
+        # we can always visit the main function in the end
         # if have main function, then visit main function 
-        program.mainFunc().accept(self, ctx)
+        # program.mainFunc().accept(self, ctx)
 
     def visitFunction(self, func: Function, ctx: ScopeStack) -> None:
+        # check if it has declared
+        funct_name = func.ident.value
+        funct_type = func.ret_t.type
+        if ctx.findConflict(funct_name):
+            raise DecafDeclConflictError(funct_name)
+
+        # declare the function
+        funct_scope = Scope(ScopeKind.LOCAL)
+        funct_symbol = FuncSymbol(funct_name, funct_type, funct_scope)
+        ctx.declare(funct_symbol)
+
+        # visit its parameters
+        parameter_list = func.parameter_list
+        for parameter in parameter_list:
+            parameter.accept(self, ctx)
+
+        # visit its body
         func.body.accept(self, ctx) # then visit the block of the function, recursively
 
     def visitBlock(self, block: Block, ctx: ScopeStack) -> None:
@@ -220,3 +244,33 @@ class Namer(Visitor[ScopeStack, None]): # basic class of any AST scanner
         value = expr.value
         if value > MAX_INT: # check if the Int may overflow
             raise DecafBadIntValueError(value)
+
+
+    # step9 codes below
+    def visitParameter(self, parameter: Parameter, ctx: ScopeStack) -> None:
+        # fine conflict in current scope
+        param_name = parameter.ident.value
+        param_type = parameter.var_t.type
+
+        if ctx.findConflict(param_name):
+            raise DecafDeclConflictError(param_name)
+
+        # if no conflict, define a symbol for it and attach it on ast tree
+        param_symbol = VarSymbol(param_name, param_type)
+        parameter.setattr("symbol", param_symbol)
+        
+
+    def visitCall(self, call: Call, ctx: ScopeStack) -> None:
+        # check if the function has defined
+        funct_name = call.ident.value
+        funct_to_call = ctx.lookup(funct_name)
+        if not funct_to_call:
+            raise DecafUndefinedVarError(funct_name)
+
+        # check arguments number
+
+        # check arguments type
+        # do not need to do in this step
+
+
+        pass

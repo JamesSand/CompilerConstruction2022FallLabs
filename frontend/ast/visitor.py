@@ -17,7 +17,7 @@ U = TypeVar("U", covariant=True)
 def accept(visitor: Visitor[T, U], ctx: T) -> Callable[[Node], Optional[U]]:
     return lambda node: node.accept(visitor, ctx)
 
-
+# visitor for namer
 class Visitor(Protocol[T, U]):  # type: ignore
     def visitOther(self, node: Node, ctx: T) -> None:
         return None
@@ -80,6 +80,13 @@ class Visitor(Protocol[T, U]):  # type: ignore
         return self.visitOther(that, ctx)
 
     def visitTInt(self, that: TInt, ctx: T) -> Optional[U]:
+        return self.visitOther(that, ctx)
+
+    # step9 codes here
+    def visitParameter(self, that: Parameter, ctx: T) -> Optional[U]:
+        return self.visitOther(that, ctx)
+
+    def visitCall(self, that: Call, ctx: T) -> Optional[U]:
         return self.visitOther(that, ctx)
 
 
