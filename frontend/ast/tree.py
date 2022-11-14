@@ -54,8 +54,26 @@ class Program(ListNode["Function"]):
 
     def __init__(self, children: list[Function]) -> None:
         super().__init__("program", children) # since now we pass in a list of functions
+        self.funct_list = children
 
     def functions(self) -> dict[str, Function]:
+
+        ret_dict = {}
+        for func in self:
+            # print(type(func))
+            # print(func)
+            if isinstance(func, Function):
+                funct_name = func.ident.value
+                ret_dict[funct_name] = func
+
+        # print(ret_dict)
+        # breakpoint()
+
+        # since here is dict, so will cover the function declar conflict error
+
+        return ret_dict
+
+
         return {func.ident.value: func for func in self if isinstance(func, Function)}
 
     def hasMainFunc(self) -> bool:

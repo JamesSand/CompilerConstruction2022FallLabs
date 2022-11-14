@@ -101,6 +101,13 @@ class Riscv:
         def __str__(self) -> str:
             return "mv " + Riscv.FMT2.format(str(self.dsts[0]), str(self.srcs[0]))
 
+    class NativeMove(NativeInstr):
+        def __init__(self, dst: Reg, src: Reg) -> None:
+            super().__init__(InstrKind.SEQ, [dst], [src], None)
+
+        def __str__(self) -> str:
+            return "mv " + Riscv.FMT2.format(str(self.dsts[0]), str(self.srcs[0]))
+
     class Unary(TACInstr):
         def __init__(self, op: UnaryOp, dst: Temp, src: Temp) -> None:
             super().__init__(InstrKind.SEQ, [dst], [src], None)
@@ -148,6 +155,16 @@ class Riscv:
                 str(Riscv.SP), str(Riscv.SP), str(self.offset)
             )
 
+    class Set_FP_accrod_SP(NativeInstr):
+        def __init__(self, offset : int) -> None:
+            super().__init__(InstrKind.SEQ, [Riscv.FP], [Riscv.SP], None)
+            self.offset = offset
+
+        def __str__(self) -> str:
+            return "addi " + Riscv.FMT3.format(
+                str(Riscv.FP), str(Riscv.SP), str(self.offset)
+            )
+
     class NativeStoreWord(NativeInstr):
         def __init__(self, src: Reg, base: Reg, offset: int) -> None:
             super().__init__(InstrKind.SEQ, [], [src, base], None)
@@ -176,3 +193,34 @@ class Riscv:
 
         def __str__(self) -> str:
             return "ret"
+
+    class Push(TACInstr):
+        def __init__(self, temp_to_store : Temp, offset : int) -> None:
+            super().__init__(InstrKind.SEQ, [], [temp_to_store], None)
+            self.temp_to_store = temp_to_store
+            self.offset = offset
+        
+        def __str__(self) -> str:
+            return "sw " + Riscv.FMT_OFFSET.format(
+                str(self.temp_to_store), str(self.offset), str(Riscv.SP)
+            )
+
+    class Call(TACInstr):
+        def __init__(self, target: Label) -> None:
+            super().__init__(InstrKind.SEQ, [], [], target)
+            self.target = target
+        
+        def __str__(self) -> str:
+            return "call " + str(self.target)
+
+    class Get_Function_Result(TACInstr):
+        def __init__(self, funct_result_temp : Temp) -> None:
+            super().__init__(InstrKind.SEQ, [funct_result_temp], [], None)
+            self.funct_result_temp = funct_result_temp
+        
+        def __str__(self) -> str:
+            return "mv " + Riscv.FMT2.format(
+                str(self.funct_result_temp), 
+                # function result store in a0
+                str(Riscv.A0)
+            )

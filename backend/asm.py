@@ -15,13 +15,42 @@ class Asm:
         self.regAlloc = regAlloc
 
     def transform(self, prog: TACProg):
+
+        # the entrance of riscv stage
+
         analyzer = LivenessAnalyzer()
 
         for func in prog.funcs:
-            pair = self.emitter.selectInstr(func)
+            # pair[0] is instructions, pair[1] is function label
+
+            # translate TAC instr to riscv instr
+            # therefore we should deal with callee save and put parameter to stack here
+            pair = self.emitter.selectInstr(func) 
+
+            # for item in pair[0]:
+            #     print(item)
+            # print()
+
+            # breakpoint()
+
             builder = CFGBuilder()
             cfg: CFG = builder.buildFrom(pair[0])
             analyzer.accept(cfg)
+
+            # allocate regs for tac virtual reg
+            # breakpoint()
             self.regAlloc.accept(cfg, pair[1])
 
-        return self.emitter.emitEnd()
+            # for item in pair[0]:
+            #     print(item)
+            # print()
+
+            # breakpoint()
+
+        ret = self.emitter.emitEnd()
+
+        # print(ret)
+
+        # exit(0)
+
+        return ret

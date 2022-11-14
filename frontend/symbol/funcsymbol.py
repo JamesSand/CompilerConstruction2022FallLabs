@@ -12,10 +12,12 @@ Function symbol, representing a function definition.
 
 
 class FuncSymbol(Symbol):
-    def __init__(self, name: str, type: DecafType, scope: Scope) -> None:
+    def __init__(self, name: str, type: DecafType, parameter_num : int , scope: Scope) -> None:
         super().__init__(name, type)
         self.scope = scope
         self.para_type = []
+
+        self.parameter_num = parameter_num
 
         self.parameter_temp = []
 

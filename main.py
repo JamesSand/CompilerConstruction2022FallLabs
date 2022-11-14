@@ -47,6 +47,7 @@ def step_parse(args: argparse.Namespace):
 # IR generation stage: Abstract syntax tree -> Three-address code
 def step_tac(p: Program):
     namer = Namer()
+    # breakpoint()
     p = namer.transform(p)
     typer = Typer()
     p = typer.transform(p)

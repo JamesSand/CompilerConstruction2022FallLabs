@@ -27,11 +27,17 @@ class TACGen(Visitor[FuncVisitor, None]):
 
         function_dict : dict [str , Function]= program.functions()
 
-        funct_name_list = []
-        for funct_name, funct in function_dict.items():
-            funct_name_list.append(funct_name)
+        # funct_name_list = []
+        # for funct_name, funct in function_dict.items():
+        #     funct_name_list.append(funct_name)
 
-        pw = ProgramWriter(funct_name_list)
+        funct_list = []
+        for funct_name, funct in function_dict.items():
+            funct_list.append(funct)
+
+        pw = ProgramWriter(funct_list)
+
+        funct_name_dict = {}
 
         for funct_name, funct in function_dict.items():
             if funct_name == "main":
@@ -40,6 +46,7 @@ class TACGen(Visitor[FuncVisitor, None]):
             # open a function visitor
             parameter_list = funct.parameter_list
             parameter_num = len(parameter_list)
+            # breakpoint()
             mv : FuncVisitor = pw.visitFunc(funct_name, parameter_num)
 
             funct_symbol : FuncSymbol = funct.getattr("symbol")
@@ -51,10 +58,12 @@ class TACGen(Visitor[FuncVisitor, None]):
                 # record which temps are need by this function
                 funct_symbol.add_parameter_temp(parameter_temp)
 
-            # visit body
-            # breakpoint()
-            funct.body.accept(self, mv)
-            mv.visitEnd()
+            funct_name_dict[funct_name] = mv
+
+            # # visit body
+            # # breakpoint()
+            # funct.body.accept(self, mv)
+            # mv.visitEnd()
 
         # here we can visit main in the end
         mainFunc = program.mainFunc()
@@ -66,8 +75,21 @@ class TACGen(Visitor[FuncVisitor, None]):
         # Remember to call mv.visitEnd after the translation a function.
         mv.visitEnd()
 
+
+        for funct_name, funct in function_dict.items():
+            if funct_name == "main":
+                continue
+
+            mv = funct_name_dict[funct_name]
+
+            funct.body.accept(self, mv)
+            mv.visitEnd()
+
         # Remember to call pw.visitEnd before finishing the translation phase.
         return pw.visitEnd()
+
+
+    
 
     def visitBlock(self, block: Block, mv: FuncVisitor) -> None:
         for child in block:
@@ -272,8 +294,8 @@ class TACGen(Visitor[FuncVisitor, None]):
             node.BinaryOp.NE : tacop.BinaryOp.NEQ,
             node.BinaryOp.LE : tacop.BinaryOp.LEQ,
             node.BinaryOp.GE : tacop.BinaryOp.GEQ,
-            node.BinaryOp.LogicAnd :tacop.BinaryOp.LAND,
-            node.BinaryOp.LogicOr : tacop.BinaryOp.LOR,
+            node.BinaryOp.LogicAnd :tacop.BinaryOp.AND,
+            node.BinaryOp.LogicOr : tacop.BinaryOp.OR,
 
         }[expr.op]
         # 直接根据 expr.op 取字典里边的 op
@@ -326,6 +348,7 @@ class TACGen(Visitor[FuncVisitor, None]):
         argument_list = call.argument_list
         for argument in argument_list:
             # allocate temp for each argument, expression in actual
+            # breakpoint()
             argument.accept(self, mv)
             # use param to declare arguments
             argument_temp = argument.getattr("val")

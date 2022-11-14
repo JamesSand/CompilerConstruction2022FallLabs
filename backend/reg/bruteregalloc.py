@@ -35,8 +35,18 @@ class BruteRegAlloc(RegAlloc):
         for reg in emitter.allocatableRegs:
             reg.used = False
 
+        self.call_argument_list : list[Reg] = []
+
     def accept(self, graph: CFG, info: SubroutineInfo) -> None:
+        # this is for a singal function
+        # here graph stand for the CFG of this function
+
+        # this is the entrance of temp allocate to reg
+
         subEmitter = self.emitter.emitSubroutine(info)
+
+        # self.bind(Temp(-1), Riscv.FP)
+
         for bb in graph.iterator():
             # you need to think more here
             # maybe we don't need to alloc regs for all the basic blocks
@@ -46,8 +56,12 @@ class BruteRegAlloc(RegAlloc):
                 continue
 
             if bb.label is not None:
+                # emit function label
                 subEmitter.emitLabel(bb.label)
+
+            # allocate for this basic block
             self.localAlloc(bb, subEmitter)
+
         subEmitter.emitEnd()
 
     def bind(self, temp: Temp, reg: Reg):
@@ -62,14 +76,20 @@ class BruteRegAlloc(RegAlloc):
             self.bindings.pop(temp.index)
 
     def localAlloc(self, bb: BasicBlock, subEmitter: SubroutineEmitter):
+        # allocate a singal basic block
+
         self.bindings.clear()
+        # clear for all regs, since it is a basic block
         for reg in self.emitter.allocatableRegs:
             reg.occupied = False
 
         # in step9, you may need to think about how to store callersave regs here
+        # loc stand for line of code
         for loc in bb.allSeq():
-            subEmitter.emitComment(str(loc.instr))
+            # emit each line of code 
+            subEmitter.emitComment(str(loc.instr)) # this is used for debug
 
+            # allocate register for this line of code 
             self.allocForLoc(loc, subEmitter)
 
         for tempindex in bb.liveOut:
@@ -80,10 +100,12 @@ class BruteRegAlloc(RegAlloc):
             self.allocForLoc(bb.locs[len(bb.locs) - 1], subEmitter)
 
     def allocForLoc(self, loc: Loc, subEmitter: SubroutineEmitter):
+        # emit for a line of code 
         instr = loc.instr
         srcRegs: list[Reg] = []
         dstRegs: list[Reg] = []
 
+        # allocate reg for src temps
         for i in range(len(instr.srcs)):
             temp = instr.srcs[i]
             if isinstance(temp, Reg):
@@ -91,6 +113,7 @@ class BruteRegAlloc(RegAlloc):
             else:
                 srcRegs.append(self.allocRegFor(temp, True, loc.liveIn, subEmitter))
 
+        # allocate reg for dst temps
         for i in range(len(instr.dsts)):
             temp = instr.dsts[i]
             if isinstance(temp, Reg):
@@ -98,7 +121,73 @@ class BruteRegAlloc(RegAlloc):
             else:
                 dstRegs.append(self.allocRegFor(temp, False, loc.liveIn, subEmitter))
 
-        subEmitter.emitNative(instr.toNative(dstRegs, srcRegs))
+
+        # we should deal with caller save regs here
+
+        # if push, then do nothing, just store the argument and its offset
+        if isinstance(instr, Riscv.Push):
+            # we do not need to do toNative here
+            argument_reg = srcRegs[0]
+            
+            # argument gere is sequence, do not need to record offset
+            # argument_offset = instr.offset
+
+            self.call_argument_list.append(argument_reg)
+
+        # if call, calculate all space need
+        elif isinstance(instr, Riscv.Call):
+            # store calller save
+            # here i sill check if it is used
+            used_caller_saved = []
+
+            for reg in self.emitter.callerSaveRegs:
+                if reg.isUsed():
+                    used_caller_saved.append(reg)
+
+            # store to stack
+            for reg in used_caller_saved:
+                subEmitter.emitStoreToStack(reg)
+
+            # store arguments
+            # self.call_argument_list.reverse()
+            # for argument in self.call_argument_list:
+            #     subEmitter.emitStoreToStack(argument)
+
+            # have to do it by human
+            argument_len = len(self.call_argument_list)
+            subEmitter.emitNative(Riscv.SPAdd(- argument_len * 4))
+
+            
+            for i in range(argument_len):
+                argument = self.call_argument_list[i]
+                subEmitter.emitNative(
+                    Riscv.NativeStoreWord(argument, Riscv.SP, i * 4)
+                )
+
+            # clear call_argument_list
+            self.call_argument_list = []
+
+            # call function, i.e. toNative
+            subEmitter.emitNative(instr.toNative(dstRegs, srcRegs))
+
+            # move result to target reg has been done by Get_Function_Result instruction
+
+            # restore argument stack
+            subEmitter.emitNative(Riscv.SPAdd(argument_len * 4))
+
+            # restore caller saved register
+            for reg in used_caller_saved:
+                subEmitter.emitLoadFromStack(reg, reg.temp)
+
+        
+        elif isinstance(instr, Riscv.Get_Function_Result):
+            subEmitter.emitNative(Riscv.NativeMove(dstRegs[0], Riscv.A0))
+
+        else:
+            # other instructions
+            # change TAC instruction to Native instruction
+            subEmitter.emitNative(instr.toNative(dstRegs, srcRegs))
+
 
     def allocRegFor(
         self, temp: Temp, isRead: bool, live: set[int], subEmitter: SubroutineEmitter

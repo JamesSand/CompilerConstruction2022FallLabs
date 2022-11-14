@@ -34,7 +34,7 @@ class Namer(Visitor[ScopeStack, None]): # basic class of any AST scanner
         # Global scope. You don't have to consider it until Step 9.
         program.globalScope = GlobalScope
         ctx = ScopeStack(program.globalScope)
-
+        # breakpoint()
         program.accept(self, ctx)
         return program
 
@@ -44,10 +44,20 @@ class Namer(Visitor[ScopeStack, None]): # basic class of any AST scanner
             raise DecafNoMainFuncError
 
         # get all functions
-        function_dict = program.functions()
-        for funct_name, funct in function_dict.items():
-            # visit each function
+        # if use this , will ignore define conflict error since the return value is a dict
+        function_list = program.funct_list
+        for funct in function_list:
             funct.accept(self, ctx)
+        # function_dict = program.functions()
+        # # for item in program.children:
+        # #     print(item)
+
+        # # breakpoint()
+
+        # for funct_name, funct in function_dict.items():
+        #     # breakpoint()
+        #     # visit each function
+        #     funct.accept(self, ctx)
         
         # we can always visit the main function in the end
         # if have main function, then visit main function 
@@ -57,12 +67,16 @@ class Namer(Visitor[ScopeStack, None]): # basic class of any AST scanner
         # check if it has declared
         funct_name = func.ident.value
         funct_type = func.ret_t.type
+        funct_parameter_num = len(func.parameter_list)
+
+
+        # print(funct_name)
         if ctx.globalscope.containsKey(funct_name):
             raise DecafDeclConflictError(funct_name)
 
         # declare the function
         funct_scope = Scope(ScopeKind.LOCAL)
-        funct_symbol = FuncSymbol(funct_name, funct_type, funct_scope)
+        funct_symbol = FuncSymbol(funct_name, funct_type,funct_parameter_num,  funct_scope)
         func.setattr("symbol", funct_symbol)
         ctx.globalscope.declare(funct_symbol)
 
@@ -74,7 +88,13 @@ class Namer(Visitor[ScopeStack, None]): # basic class of any AST scanner
             parameter.accept(self, ctx)
 
         # visit its body
-        func.body.accept(self, ctx) # then visit the block of the function, recursively
+
+        # visit statement directly
+        # we can not afford another scope (x)
+        for child in func.body:
+            child.accept(self, ctx)
+
+        # func.body.accept(self, ctx) # then visit the block of the function, recursively
 
         ctx.close()
 
@@ -173,6 +193,8 @@ class Namer(Visitor[ScopeStack, None]): # basic class of any AST scanner
         type = decl.var_t.type
         init_expr = decl.init_expr
 
+        # breakpoint()
+
         conflict_result = ctx.findConflict(name)
         if conflict_result:
             # conflict 
@@ -265,20 +287,30 @@ class Namer(Visitor[ScopeStack, None]): # basic class of any AST scanner
         # if no conflict, define a symbol for it and attach it on ast tree
         param_symbol = VarSymbol(param_name, param_type)
         parameter.setattr("symbol", param_symbol)
+        # breakpoint()
         ctx.declare(param_symbol)
         
 
     def visitCall(self, call: Call, ctx: ScopeStack) -> None:
         # check if the function has defined
         funct_name = call.ident.value
+
+        if not ctx.globalscope.containsKey(funct_name):
+            raise DecafUndefinedFuncError(funct_name)
+
         funct_to_call = ctx.lookup(funct_name)
-        if not funct_to_call:
-            raise DecafUndefinedVarError(funct_name)
+        if not funct_to_call.isFunc:
+            raise DecafBadFuncCallError(funct_name)
 
         # check arguments number
+        funct_symbol: FuncSymbol = ctx.globalscope.get(funct_name)
+        if not (funct_symbol.parameter_num == len(call.argument_list)):
+            # print(funct_symbol.parameter_num, len(call.argument_list))
+            raise DecafBadFuncCallError(funct_name)
 
         # check arguments type
         # do not need to do in this step
 
-
-        pass
+        call.ident.setattr("symbol", funct_symbol)
+        for argument in call.argument_list:
+            argument.accept(self, ctx)

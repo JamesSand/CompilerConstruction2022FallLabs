@@ -11,8 +11,8 @@ class Context:
         self.funcs = []
         self.nextTempLabelId = 1
 
-    def putFuncLabel(self, name: str) -> None:
-        self.labels[name] = FuncLabel(name)
+    def putFuncLabel(self, name: str, funct_parameter_num : int) -> None:
+        self.labels[name] = FuncLabel(name, funct_parameter_num)
 
     def getFuncLabel(self, name: str) -> FuncLabel:
         return self.labels[name]

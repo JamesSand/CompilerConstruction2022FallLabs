@@ -9,14 +9,17 @@ from .context import Context
 from .funcvisitor import FuncVisitor
 from .tacprog import TACProg
 
+from frontend.ast.tree import Function
+
 
 class ProgramWriter:
-    def __init__(self, funcs: list[str]) -> None:
+    def __init__(self, funcs: list[Function]) -> None:
         self.funcs = []
         self.ctx = Context()
         for func in funcs:
+            funct_name = func.ident.value
             self.funcs.append(func)
-            self.ctx.putFuncLabel(func)
+            self.ctx.putFuncLabel(funct_name, len(func.parameter_list))
 
     def visitMainFunc(self) -> FuncVisitor:
         entry = MAIN_LABEL

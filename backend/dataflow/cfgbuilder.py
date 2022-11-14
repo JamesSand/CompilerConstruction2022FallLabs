@@ -48,7 +48,12 @@ class CFGBuilder:
             bb: BasicBlock = self.bbs[now]
             now += 1
 
+            # for item in bb.locs:
+            #     print(item.instr)
+            # # breakpoint()
+            # breakpoint()
             if bb.kind is BlockKind.END_BY_JUMP:
+                # breakpoint()
                 if self.labelsToBBs.get(bb.getLastInstr().label) is None:
                     raise NullPointerException
                 edges.append((bb.id, self.labelsToBBs.get(bb.getLastInstr().label)))
