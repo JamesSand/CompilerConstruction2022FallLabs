@@ -49,7 +49,7 @@ def p_relational(self: Parser) -> Expression:
 
 ```json
 additive : multiplicative additive_temp
-			| additive_temp
+			
 additive_temp : 
 			| '+' multiplicative additive_temp 
 			| '-' multiplicative additive_temp
