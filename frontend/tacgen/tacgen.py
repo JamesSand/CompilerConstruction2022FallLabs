@@ -43,6 +43,9 @@ class TACGen(Visitor[FuncVisitor, None]):
             if funct_name == "main":
                 continue
 
+            if funct.body is NULL:
+                continue
+
             # open a function visitor
             parameter_list = funct.parameter_list
             parameter_num = len(parameter_list)
@@ -80,9 +83,14 @@ class TACGen(Visitor[FuncVisitor, None]):
             if funct_name == "main":
                 continue
 
+            if funct.body is NULL:
+                continue
+
             mv = funct_name_dict[funct_name]
 
+            # if funct.body is not NULL:
             funct.body.accept(self, mv)
+
             mv.visitEnd()
 
         # Remember to call pw.visitEnd before finishing the translation phase.

@@ -71,6 +71,12 @@ def p_function(p):
     """
     p[0] = Function(p[1], p[2], p[4], p[7]) # choose from right side accroding to Function() init
 
+def p_function_declare(p):
+    """
+    function : type Identifier LParen parameter_list RParen Semi
+    """
+    p[0] = Function(p[1], p[2], p[4])
+
 def p_parameter_list(p):
     """
     parameter_list : parameter Comma parameter_list

@@ -87,12 +87,12 @@ class Namer(Visitor[ScopeStack, None]): # basic class of any AST scanner
         for parameter in parameter_list:
             parameter.accept(self, ctx)
 
-        # visit its body
-
-        # visit statement directly
-        # we can not afford another scope (x)
-        for child in func.body:
-            child.accept(self, ctx)
+        # visit its body, if have
+        if func.body is not NULL:
+            # visit statement directly
+            # we can not afford another scope (x)
+            for child in func.body:
+                child.accept(self, ctx)
 
         # func.body.accept(self, ctx) # then visit the block of the function, recursively
 
