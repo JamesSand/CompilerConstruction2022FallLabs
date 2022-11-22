@@ -69,17 +69,29 @@ class Namer(Visitor[ScopeStack, None]): # basic class of any AST scanner
         funct_type = func.ret_t.type
         funct_parameter_num = len(func.parameter_list)
 
+        has_body = True
+        if not func.body:
+            has_body = False
 
         # print(funct_name)
         if ctx.globalscope.containsKey(funct_name):
-            raise DecafDeclConflictError(funct_name)
+            conflict_symbol : FuncSymbol = ctx.globalscope.get(funct_name)
+            if conflict_symbol.has_body:
+                raise DecafDeclConflictError(funct_name)
+            
+            # check if has body now
+            if has_body:
+                conflict_symbol.has_body = True
 
-        # declare the function
+        else:
+            # declare the function
+            funct_scope = Scope(ScopeKind.LOCAL)
+
+            funct_symbol = FuncSymbol(funct_name, funct_type,funct_parameter_num, funct_scope, has_body)
+            func.setattr("symbol", funct_symbol)
+            ctx.globalscope.declare(funct_symbol)
+
         funct_scope = Scope(ScopeKind.LOCAL)
-        funct_symbol = FuncSymbol(funct_name, funct_type,funct_parameter_num,  funct_scope)
-        func.setattr("symbol", funct_symbol)
-        ctx.globalscope.declare(funct_symbol)
-
         ctx.open(funct_scope)
 
         # visit its parameters
