@@ -207,7 +207,7 @@ class Riscv:
 
     class Call(TACInstr):
         def __init__(self, target: Label) -> None:
-            super().__init__(InstrKind.SEQ, [], [], target)
+            super().__init__(InstrKind.SEQ, [Riscv.A0, Riscv.RA], [], target)
             self.target = target
         
         def __str__(self) -> str:
@@ -223,4 +223,16 @@ class Riscv:
                 str(self.funct_result_temp), 
                 # function result store in a0
                 str(Riscv.A0)
+            )
+
+    class Param(TACInstr):
+        def __init__(self, index : int, param_temp : Temp) -> None:
+            super().__init__(InstrKind.SEQ, [], [param_temp], None)
+            self.param_temp = param_temp
+            self.index = index
+        
+        def __str__(self) -> str:
+            return "param " + Riscv.FMT2.format(
+                str(self.index),
+                str(self.param_temp)
             )

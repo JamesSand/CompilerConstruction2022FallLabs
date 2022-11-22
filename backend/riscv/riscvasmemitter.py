@@ -141,16 +141,11 @@ class RiscvAsmEmitter(AsmEmitter):
         def visitCall(self, call : Call):
             # we only need to consider parameter passing and function calling here
 
-            # push all parameters to stack
-            for i in range(len(self.parameter_to_push)):
+            param_num = len(self.parameter_to_push)
 
-                # I think should save caller saved registers here
-
-                parameter_to_store = self.parameter_to_push[i]
-
-                # here we just define we want to store this parameter to its location
-                # not in reality
-                self.seq.append(Riscv.Push(parameter_to_store, i * 4))
+            # we donot need to do very specific things here
+            for i in range(param_num):
+                self.seq.append(Riscv.Param(i, self.parameter_to_push[i]))
             
             # clear argument temp list
             self.parameter_to_push = []
@@ -205,6 +200,9 @@ class RiscvSubroutineEmitter(SubroutineEmitter):
     # usually happen when reaching the end of a basicblock
     # in step9, you need to think about the fuction parameters here
     def emitStoreToStack(self, src: Reg) -> None:
+
+        # breakpoint()
+
         if src.temp.index not in self.offsets:
             self.offsets[src.temp.index] = self.nextLocalOffset
             self.nextLocalOffset += 4
@@ -215,10 +213,14 @@ class RiscvSubroutineEmitter(SubroutineEmitter):
             Riscv.NativeStoreWord(src, Riscv.SP, self.offsets[src.temp.index])
         )
 
+        # print(Riscv.NativeStoreWord(src, Riscv.SP, self.offsets[src.temp.index]))
+
     # load some temp from stack
     # usually happen when using a temp which is stored to stack before
     # in step9, you need to think about the fuction parameters here
     def emitLoadFromStack(self, dst: Reg, src: Temp):
+
+        # breakpoint()
 
         # since function parameter always be the first virtual register
         if src.index < self.funct_parameter_num:

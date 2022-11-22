@@ -27,9 +27,12 @@ class Asm:
             # therefore we should deal with callee save and put parameter to stack here
             pair = self.emitter.selectInstr(func) 
 
+            # pair[0] = list[Riscv.Instr]
+            # pair[1] = function info
+
             # for item in pair[0]:
             #     print(item)
-            # print()
+            # print("-" * 50)
 
             # breakpoint()
 
@@ -44,6 +47,8 @@ class Asm:
             # for item in pair[0]:
             #     print(item)
             # print()
+
+            # # print("-" * 50)
 
             # breakpoint()
 
