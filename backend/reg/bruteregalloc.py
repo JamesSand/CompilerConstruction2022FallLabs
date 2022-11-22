@@ -61,7 +61,7 @@ class BruteRegAlloc(RegAlloc):
                 continue
 
             if bb.label is not None:
-                # emit function label
+                # emit label
                 subEmitter.emitLabel(bb.label)
 
 
@@ -95,7 +95,6 @@ class BruteRegAlloc(RegAlloc):
         for reg in self.emitter.allocatableRegs:
             reg.occupied = False
 
-        # breakpoint()
 
         # in step9, you may need to think about how to store callersave regs here
         # loc stand for line of code
@@ -106,6 +105,7 @@ class BruteRegAlloc(RegAlloc):
             # allocate register for this line of code 
             self.allocForLoc(loc, subEmitter)
 
+        # end of emit basic block
         for tempindex in bb.liveOut:
             if tempindex in self.bindings:
                 subEmitter.emitStoreToStack(self.bindings.get(tempindex))
@@ -130,8 +130,6 @@ class BruteRegAlloc(RegAlloc):
             else:
                 srcRegs.append(self.allocRegFor(temp, True, loc.liveIn, subEmitter))
 
-        # breakpoint()
-
         # allocate reg for dst temps
         for i in range(len(instr.dsts)):
             temp = instr.dsts[i]
@@ -139,13 +137,6 @@ class BruteRegAlloc(RegAlloc):
                 dstRegs.append(temp)
             else:
                 dstRegs.append(self.allocRegFor(temp, False, loc.liveIn, subEmitter))
-
-        # breakpoint()
-
-
-        # we should deal with caller save regs here
-
-        # breakpoint()
 
         # if push, then do nothing, just store the argument and its offset
         if isinstance(instr, Riscv.Param):
@@ -181,14 +172,8 @@ class BruteRegAlloc(RegAlloc):
 
                 caller_save_dict[reg.name] = subEmitter.offsets[reg.temp.index]
 
-            self.caller_saved_dict = caller_save_dict
-
             # have to do it by human
             argument_len = len(self.call_argument_list)
-
-            # if argument_len == 1:
-            #     breakpoint()
-
 
             if argument_len <= 8:
                 for i in range(argument_len):
@@ -238,9 +223,6 @@ class BruteRegAlloc(RegAlloc):
 
             # move result to target reg has been done by Get_Function_Result instruction
 
-            self.argument_len = argument_len
-            self.used_caller_saved = used_caller_saved
-
             # restore argument stack
             # only when argument num over than 8
             if argument_len > 8:
@@ -253,25 +235,6 @@ class BruteRegAlloc(RegAlloc):
         
         elif isinstance(instr, Riscv.Get_Function_Result):
             subEmitter.emitNative(Riscv.NativeMove(dstRegs[0], Riscv.A0))
-
-            # argument_len = self.argument_len
-            # used_caller_saved = self.used_caller_saved
-
-            # if argument_len > 8:
-            #     subEmitter.emitNative(Riscv.SPAdd((argument_len - 8) * 4))
-
-            # caller_save_dict = self.caller_saved_dict
-
-            # # restore caller saved register
-            # for reg in used_caller_saved:
-            #     subEmitter.emitLoadFromStack(reg, reg.temp)
-                # reg_name = reg.name
-                # if reg_name in caller_save_dict:
-
-                #     subEmitter.emitNative(Riscv.NativeLoadWord(reg, Riscv.SP, caller_save_dict[reg_name]))
-
-                # else:
-                #     raise IllegalArgumentException()
 
         else:
             # other instructions

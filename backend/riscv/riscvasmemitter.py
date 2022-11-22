@@ -203,9 +203,6 @@ class RiscvSubroutineEmitter(SubroutineEmitter):
     # in step9, you need to think about the fuction parameters here
     def emitStoreToStack(self, src: Reg) -> None:
 
-        # if str(src) == "t0":
-        #     breakpoint()
-
         if src.temp.index not in self.offsets:
             self.offsets[src.temp.index] = self.nextLocalOffset
             self.nextLocalOffset += 4
@@ -221,12 +218,15 @@ class RiscvSubroutineEmitter(SubroutineEmitter):
     # in step9, you need to think about the fuction parameters here
     def emitLoadFromStack(self, dst: Reg, src: Temp):
 
+        # TODO
+
         # since function parameter always be the first virtual register
         if src.index < self.funct_parameter_num:
             # base on FP
             self.buf.append(
                 Riscv.NativeLoadWord(dst, Riscv.FP, self.argument_offset[src.index])
             )
+
 
             return
 
@@ -255,6 +255,14 @@ class RiscvSubroutineEmitter(SubroutineEmitter):
         # we first sub the stack here
         # therefore we can save by adding to SP later
 
+        # store a0 - a7
+        self.printer.printInstr(Riscv.SPAdd(- 4 * 8))
+
+        for i in range(len(Riscv.ArgRegs)):
+            self.printer.printInstr(
+                Riscv.NativeStoreWord(Riscv.ArgRegs[i], Riscv.SP, 4 * i)
+            )
+
         self.printer.printInstr(Riscv.SPAdd(-self.nextLocalOffset))
 
         # in step9, you need to think about how to store RA here
@@ -275,9 +283,6 @@ class RiscvSubroutineEmitter(SubroutineEmitter):
         )
 
         # done all callee save
-
-        # remember current next local offset
-        self.prologue_next_local_offset = self.nextLocalOffset 
 
         # set FP relative to SP
         self.printer.printInstr(
@@ -322,7 +327,12 @@ class RiscvSubroutineEmitter(SubroutineEmitter):
             Riscv.NativeLoadWord(Riscv.FP, Riscv.SP, 4 * len(Riscv.CalleeSaved) + 4)
         )
 
+        # pull up sp
         self.printer.printInstr(Riscv.SPAdd(self.nextLocalOffset))
+
+        # pull up for a0 - a7
+        self.printer.printInstr(Riscv.SPAdd( 4 * 8))
+
         self.printer.printComment("end of epilogue")
         self.printer.println("")
 
