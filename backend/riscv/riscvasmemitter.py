@@ -154,6 +154,8 @@ class RiscvAsmEmitter(AsmEmitter):
             funct_label = call.target
             self.seq.append(Riscv.Call(funct_label))
 
+            # self.seq.append()            
+
             # restore result to target register
             # since here src is Reg and dst is Temp, so we need a new Risc class
             function_result_temp = call.result
@@ -201,14 +203,13 @@ class RiscvSubroutineEmitter(SubroutineEmitter):
     # in step9, you need to think about the fuction parameters here
     def emitStoreToStack(self, src: Reg) -> None:
 
-        # breakpoint()
+        # if str(src) == "t0":
+        #     breakpoint()
 
         if src.temp.index not in self.offsets:
             self.offsets[src.temp.index] = self.nextLocalOffset
             self.nextLocalOffset += 4
 
-            # if (self.nextLocalOffset == 52):
-            #     breakpoint()
         self.buf.append(
             Riscv.NativeStoreWord(src, Riscv.SP, self.offsets[src.temp.index])
         )
@@ -220,19 +221,8 @@ class RiscvSubroutineEmitter(SubroutineEmitter):
     # in step9, you need to think about the fuction parameters here
     def emitLoadFromStack(self, dst: Reg, src: Temp):
 
-        # breakpoint()
-
         # since function parameter always be the first virtual register
         if src.index < self.funct_parameter_num:
-
-            # if (self.nextLocalOffset + self.argument_offset[src.index] == 52):
-            #     breakpoint()
-
-            # # base on SP
-            # self.buf.append(
-            #     Riscv.NativeLoadWord(dst, Riscv.SP, self.prologue_next_local_offset + self.argument_offset[src.index])
-            # )
-
             # base on FP
             self.buf.append(
                 Riscv.NativeLoadWord(dst, Riscv.FP, self.argument_offset[src.index])
@@ -241,6 +231,7 @@ class RiscvSubroutineEmitter(SubroutineEmitter):
             return
 
         if src.index not in self.offsets:
+            breakpoint()
             raise IllegalArgumentException()
         else:
             self.buf.append(

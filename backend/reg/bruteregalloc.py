@@ -14,6 +14,8 @@ from utils.tac.temp import Temp
 
 from backend.riscv.riscvasmemitter import RiscvSubroutineEmitter
 
+from utils.error import IllegalArgumentException
+
 """
 BruteRegAlloc: one kind of RegAlloc
 
@@ -179,11 +181,14 @@ class BruteRegAlloc(RegAlloc):
 
                 caller_save_dict[reg.name] = subEmitter.offsets[reg.temp.index]
 
+            self.caller_saved_dict = caller_save_dict
+
             # have to do it by human
             argument_len = len(self.call_argument_list)
 
-            # if str(instr) != "call random":
+            # if argument_len == 1:
             #     breakpoint()
+
 
             if argument_len <= 8:
                 for i in range(argument_len):
@@ -220,7 +225,7 @@ class BruteRegAlloc(RegAlloc):
 
                     if reg_name in caller_save_dict:
                         # if this register is stored on stack
-                        subEmitter.emitNative(Riscv.NativeLoadWord(Riscv.ArgRegs[i], Riscv.SP, caller_save_dict[reg_name]))
+                        subEmitter.emitNative(Riscv.NativeLoadWord(Riscv.ArgRegs[i], Riscv.SP, caller_save_dict[reg_name] + others_num * 4))
                     else:
                         # just do move is ok
                         subEmitter.emitNative(Riscv.NativeMove(Riscv.ArgRegs[i], argument_reg))
@@ -233,14 +238,15 @@ class BruteRegAlloc(RegAlloc):
 
             # move result to target reg has been done by Get_Function_Result instruction
 
-            
+            self.argument_len = argument_len
+            self.used_caller_saved = used_caller_saved
 
             # restore argument stack
             # only when argument num over than 8
             if argument_len > 8:
                 subEmitter.emitNative(Riscv.SPAdd((argument_len - 8) * 4))
 
-            # restore caller saved register
+            # # restore caller saved register
             for reg in used_caller_saved:
                 subEmitter.emitLoadFromStack(reg, reg.temp)
 
@@ -248,7 +254,24 @@ class BruteRegAlloc(RegAlloc):
         elif isinstance(instr, Riscv.Get_Function_Result):
             subEmitter.emitNative(Riscv.NativeMove(dstRegs[0], Riscv.A0))
 
+            # argument_len = self.argument_len
+            # used_caller_saved = self.used_caller_saved
 
+            # if argument_len > 8:
+            #     subEmitter.emitNative(Riscv.SPAdd((argument_len - 8) * 4))
+
+            # caller_save_dict = self.caller_saved_dict
+
+            # # restore caller saved register
+            # for reg in used_caller_saved:
+            #     subEmitter.emitLoadFromStack(reg, reg.temp)
+                # reg_name = reg.name
+                # if reg_name in caller_save_dict:
+
+                #     subEmitter.emitNative(Riscv.NativeLoadWord(reg, Riscv.SP, caller_save_dict[reg_name]))
+
+                # else:
+                #     raise IllegalArgumentException()
 
         else:
             # other instructions

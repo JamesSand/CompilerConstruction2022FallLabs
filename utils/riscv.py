@@ -48,7 +48,7 @@ class Riscv:
     T5 = Reg(30, "t5")
     T6 = Reg(31, "t6")
 
-    CallerSaved = [T0, T1, T2, T3, T4, T5, T6, A0, A1, A2, A3, A4, A5, A6, A7]
+    CallerSaved = [T0, T1, T2, T3, T4, T5, T6, A1, A2, A3, A4, A5, A6, A7]
 
     CalleeSaved = [S1, S2, S3, S4, S5, S6, S7, S8, S9, S10, S11]
 
@@ -215,7 +215,7 @@ class Riscv:
 
     class Get_Function_Result(TACInstr):
         def __init__(self, funct_result_temp : Temp) -> None:
-            super().__init__(InstrKind.SEQ, [funct_result_temp], [], None)
+            super().__init__(InstrKind.SEQ, [funct_result_temp], [Riscv.A0], None)
             self.funct_result_temp = funct_result_temp
         
         def __str__(self) -> str:

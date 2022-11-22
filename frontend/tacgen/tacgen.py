@@ -338,8 +338,6 @@ class TACGen(Visitor[FuncVisitor, None]):
 
         mv.visitLabel(exitLabel)
 
-        
-        
 
     def visitIntLiteral(self, expr: IntLiteral, mv: FuncVisitor) -> None:
         expr.setattr("val", mv.visitLoad(expr.value))
@@ -354,12 +352,25 @@ class TACGen(Visitor[FuncVisitor, None]):
 
     def visitCall(self, call : Call, mv: FuncVisitor) -> None:
         argument_list = call.argument_list
+
+        # breakpoint()
+
+        # if len(argument_list) == 3:
+        #     breakpoint()
+
+        argument_temp_list = []
+
         for argument in argument_list:
             # allocate temp for each argument, expression in actual
             # breakpoint()
             argument.accept(self, mv)
             # use param to declare arguments
             argument_temp = argument.getattr("val")
+
+            # wait all calulate done then visit param temp
+            argument_temp_list.append(argument_temp)
+        
+        for argument_temp in argument_temp_list:
             mv.visitParameter(argument_temp)
 
         # call the function
