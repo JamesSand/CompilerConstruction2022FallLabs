@@ -50,6 +50,19 @@ class FuncVisitor:
             self.func.add(LoadStrConst(temp, value))
         return temp
 
+    def visitLoadGlobalAddr(self, global_var_name : str) -> Temp:
+        temp = self.freshTemp()
+        self.func.add(LoadGlobalAddr(temp, global_var_name))
+        return temp
+
+    def visitLoadFromMem(self, addr : Temp, offset : int) -> Temp:
+        temp = self.freshTemp()
+        self.func.add(LoadFromMem(temp, addr, offset))
+        return temp
+
+    def visitStoreToMem(self, addr : Temp, offset : int, value : Temp) -> None:
+        self.func.add(StoreToMem(addr, offset, value))
+
     def visitUnary(self, op: UnaryOp, operand: Temp) -> Temp:
         temp = self.freshTemp()
         self.func.add(Unary(op, temp, operand))

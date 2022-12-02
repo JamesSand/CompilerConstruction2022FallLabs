@@ -65,16 +65,14 @@ class Program(ListNode["Function"]):
             if isinstance(func, Function):
                 funct_name = func.ident.value
                 ret_dict[funct_name] = func
-
-        # print(ret_dict)
-        # breakpoint()
-
-        # since here is dict, so will cover the function declar conflict error
-
         return ret_dict
 
-
-        return {func.ident.value: func for func in self if isinstance(func, Function)}
+    def global_vars(self):
+        global_vars = []
+        for func in self:
+            if isinstance(func, Declaration):
+                global_vars.append(func)
+        return global_vars
 
     def hasMainFunc(self) -> bool:
         return "main" in self.functions()

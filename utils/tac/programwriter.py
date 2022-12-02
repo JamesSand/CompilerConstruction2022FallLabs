@@ -21,6 +21,8 @@ class ProgramWriter:
             self.funcs.append(func)
             self.ctx.putFuncLabel(funct_name, len(func.parameter_list))
 
+        self.global_vars = []
+
     def visitMainFunc(self) -> FuncVisitor:
         entry = MAIN_LABEL
         return FuncVisitor(entry, 0, self.ctx)
@@ -30,4 +32,4 @@ class ProgramWriter:
         return FuncVisitor(entry, numArgs, self.ctx)
 
     def visitEnd(self) -> TACProg:
-        return TACProg(self.ctx.funcs)
+        return TACProg(self.ctx.funcs, self.global_vars)

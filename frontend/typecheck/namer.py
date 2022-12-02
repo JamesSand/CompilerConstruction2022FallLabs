@@ -46,8 +46,33 @@ class Namer(Visitor[ScopeStack, None]): # basic class of any AST scanner
         # get all functions
         # if use this , will ignore define conflict error since the return value is a dict
         function_list = program.funct_list
-        for funct in function_list:
-            funct.accept(self, ctx)
+        for item in function_list:
+            # deal with funct and global var separately
+            if isinstance(item, Function):
+                item.accept(self, ctx)
+                continue
+
+            # deal with global var
+            if isinstance(item, Declaration):
+                var_name = item.ident.value
+                var_type = item.var_t.type 
+                var_init_expr = item.init_expr
+
+                # check if it has been declared
+                if ctx.globalscope.containsKey(var_name):
+                    raise DecafDeclConflictError(var_name)
+
+                # declare the var
+                var_symbol = VarSymbol(var_name, var_type, True)
+                ctx.globalscope.declare(var_symbol)
+                item.setattr("symbol", var_symbol)
+
+                if not var_init_expr:
+                    var_init_expr.accept(self, ctx)
+                continue
+
+            # we will not deal with things other than function and global var
+            
         # function_dict = program.functions()
         # # for item in program.children:
         # #     print(item)
@@ -268,8 +293,10 @@ class Namer(Visitor[ScopeStack, None]): # basic class of any AST scanner
         """
         # name = str(ident)
         name = ident.value
+        # if name == "foo":
+        #     breakpoint()
         lookup_result = ctx.lookup(name)
-        if lookup_result is NULL:
+        if lookup_result is None:
             # not declare
             raise DecafUndefinedVarError(name)
         else:

@@ -227,3 +227,54 @@ class Call(TACInstr):
 
     def accept(self, v: TACVisitor) -> None:
         v.visitCall(self)
+
+class Global(TACInstr):
+    def __init__(self, name: str, value : int) -> None:
+        super().__init__(InstrKind.SEQ, [], [], None)
+        self.name = name
+        self.value = value
+
+    def __str__(self) -> str:
+        return "GLOBAL %s %d" % (self.name, self.value)
+
+    def accept(self, v: TACVisitor) -> None:
+        v.visitGlobal(self)
+
+class LoadGlobalAddr(TACInstr):
+    def __init__(self, dst: Temp, name: str) -> None:
+        super().__init__(InstrKind.SEQ, [dst], [], None)
+        self.dst = dst
+        self.name = name
+
+    def __str__(self) -> str:
+        return "%s = GLOBAL_VAR %s" % (self.dsts[0], self.name)
+
+    def accept(self, v: TACVisitor) -> None:
+        v.visitLoadGlobalAddr(self)
+
+class LoadFromMem(TACInstr):
+    def __init__(self, dst: Temp, addr: Temp, offset : int) -> None:
+        super().__init__(InstrKind.SEQ, [dst], [addr], None)
+        self.dst = dst
+        self.addr = addr
+        self.offset = offset
+
+    def __str__(self) -> str:
+        return "%s = LOAD %s, %d" % (self.dsts[0], self.srcs[0], self.offset)
+
+    def accept(self, v: TACVisitor) -> None:
+        v.visitLoadFromMem(self)
+
+class StoreToMem(TACInstr):
+    def __init__(self, addr: Temp, offset : int, value : Temp) -> None:
+        super().__init__(InstrKind.SEQ, [], [addr, value], None)
+        self.addr = addr
+        self.offset = offset
+        self.value = value
+
+    def __str__(self) -> str:
+        # 0 for addr, 1 for value
+        return "STORE %s, %d(%s)" % (self.srcs[1], self.offset, self.srcs[0])
+
+    def accept(self, v: TACVisitor) -> None:
+        v.visitStoreToMem(self)

@@ -4,6 +4,8 @@ from frontend.ast.tree import *
 from frontend.ast.visitor import Visitor
 from frontend.symbol.varsymbol import VarSymbol
 from frontend.type.array import ArrayType
+
+from utils.tac.tacinstr import Global
 from utils.tac import tacop
 from utils.tac.funcvisitor import FuncVisitor
 from utils.tac.programwriter import ProgramWriter
@@ -11,6 +13,7 @@ from utils.tac.tacprog import TACProg
 from utils.tac.temp import Temp
 
 from frontend.symbol.funcsymbol import FuncSymbol
+
 
 """
 The TAC generation phase: translate the abstract syntax tree into three-address code.
@@ -23,7 +26,6 @@ class TACGen(Visitor[FuncVisitor, None]):
 
     # Entry of this phase
     def transform(self, program: Program) -> TACProg:
-        
 
         function_dict : dict [str , Function]= program.functions()
 
@@ -36,6 +38,16 @@ class TACGen(Visitor[FuncVisitor, None]):
             funct_list.append(funct)
 
         pw = ProgramWriter(funct_list)
+
+        # deal with global var first
+        global_var : list[Declaration]= program.global_vars()
+        for var in global_var:
+            init_value = 0
+            if var.init_expr is not NULL:
+                init_value = var.init_expr.value
+            
+            pw.global_vars.append(Global(var.ident.value, init_value))
+
 
         funct_name_dict = {}
 
@@ -122,10 +134,18 @@ class TACGen(Visitor[FuncVisitor, None]):
         """
         1. Set the 'val' attribute of ident as the temp variable of the 'symbol' attribute of ident.
         """
-        symbol = ident.getattr("symbol")
-        temp = symbol.temp
-        # Identifier 的挂载和 Declaration 的挂载一致
-        ident.setattr("val", temp)
+        symbol : VarSymbol= ident.getattr("symbol")
+        if symbol is None:
+            breakpoint()
+        if symbol.isGlobal:
+            var_name = symbol.name
+            var_addr = mv.visitLoadGlobalAddr(var_name)
+            var_temp = mv.visitLoadFromMem(var_addr, 0)
+            ident.setattr("val", var_temp)
+        else:
+            temp = symbol.temp
+            # Identifier 的挂载和 Declaration 的挂载一致
+            ident.setattr("val", temp)
 
         # 先给 a 一个 虚拟寄存器
 
@@ -163,6 +183,13 @@ class TACGen(Visitor[FuncVisitor, None]):
 
         # expression 的 val 是左值的 虚拟寄存器
         expr.setattr("val", assign_result)
+
+        if isinstance(expr.lhs, Identifier):
+            symbol : VarSymbol= expr.lhs.getattr("symbol")
+            if symbol.isGlobal:
+                var_name = symbol.name
+                var_addr = mv.visitLoadGlobalAddr(var_name)
+                mv.visitStoreToMem(var_addr, 0, expr.lhs.getattr("val"))
 
     def visitIf(self, stmt: If, mv: FuncVisitor) -> None:
         # visiti condition
