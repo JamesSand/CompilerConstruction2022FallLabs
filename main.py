@@ -60,7 +60,7 @@ def step_tac(p: Program):
 
 # Target code generation stage: Three-address code -> RISC-V assembly code
 def step_asm(p: TACProg):
-    riscvAsmEmitter = RiscvAsmEmitter(Riscv.AllocatableRegs, Riscv.CallerSaved)
+    riscvAsmEmitter = RiscvAsmEmitter(Riscv.AllocatableRegs, Riscv.CallerSaved, p.global_vars)
     asm = Asm(riscvAsmEmitter, BruteRegAlloc(riscvAsmEmitter))
     prog = asm.transform(p)
     return prog

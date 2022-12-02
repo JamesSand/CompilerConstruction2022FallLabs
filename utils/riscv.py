@@ -236,3 +236,28 @@ class Riscv:
                 str(self.index),
                 str(self.param_temp)
             )
+
+    # step 10 codes here
+    class LoadGlobalAddr(TACInstr):
+        def __init__(self, dst: Temp, name: str) -> None:
+            super().__init__(InstrKind.SEQ, [dst], [], None)
+            self.name = name
+
+        def __str__(self) -> str:
+            return "la " + Riscv.FMT2.format(str(self.dsts[0]), self.name)
+
+    class LoadFromMem(TACInstr):
+        def __init__(self, dst: Temp, offset: int, addr: Temp) -> None:
+            super().__init__(InstrKind.SEQ, [dst], [addr], None)
+            self.offset = offset
+
+        def __str__(self) -> str:
+            return "lw " + Riscv.FMT_OFFSET.format(self.dsts[0], self.offset, self.srcs[0])
+
+    class StoreToMem(TACInstr):
+        def __init__(self, value: Temp, offset: int, addr : Temp) -> None:
+            super().__init__(InstrKind.SEQ, [], [value, addr], None)
+            self.offset = offset
+
+        def __str__(self) -> str:
+            return "sw " + Riscv.FMT_OFFSET.format(self.srcs[0], self.offset, self.srcs[1])

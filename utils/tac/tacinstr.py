@@ -24,7 +24,14 @@ class TACInstr:
         self.label = label
 
     def getRead(self) -> list[int]:
-        return [src.index for src in self.srcs]
+        ret_list = []
+        for src in self.srcs:
+            # if isinstance(src, int):
+            #     breakpoint()
+            ret_list.append(src.index)
+
+        return ret_list
+        # return [src.index for src in self.srcs]
 
     def getWritten(self) -> list[int]:
         return [dst.index for dst in self.dsts]
@@ -266,15 +273,15 @@ class LoadFromMem(TACInstr):
         v.visitLoadFromMem(self)
 
 class StoreToMem(TACInstr):
-    def __init__(self, addr: Temp, offset : int, value : Temp) -> None:
-        super().__init__(InstrKind.SEQ, [], [addr, value], None)
+    def __init__(self, value: Temp, offset : int, addr : Temp) -> None:
+        super().__init__(InstrKind.SEQ, [], [value, addr], None)
         self.addr = addr
         self.offset = offset
         self.value = value
 
     def __str__(self) -> str:
         # 0 for addr, 1 for value
-        return "STORE %s, %d(%s)" % (self.srcs[1], self.offset, self.srcs[0])
+        return "STORE %s, %d(%s)" % (self.value, self.offset, self.addr)
 
     def accept(self, v: TACVisitor) -> None:
         v.visitStoreToMem(self)

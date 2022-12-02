@@ -22,12 +22,22 @@ class RiscvAsmEmitter(AsmEmitter):
         self,
         allocatableRegs: list[Reg],
         callerSaveRegs: list[Reg],
+        global_vars: list[Global],
     ) -> None:
         super().__init__(allocatableRegs, callerSaveRegs)
 
     
         # the start of the asm code
         # int step10, you need to add the declaration of global var here
+        
+        # init all global vars here
+        for var in global_vars:
+            self.printer.println(".data")
+            self.printer.println(f".global {var.name}")
+            self.printer.printLabel(Label(LabelKind.BLOCK, var.name))
+            self.printer.println(f".word {var.value}")
+        self.printer.println("")
+
         self.printer.println(".text")
         self.printer.println(".global main")
         self.printer.println("")
@@ -162,6 +172,17 @@ class RiscvAsmEmitter(AsmEmitter):
             self.seq.append(Riscv.Get_Function_Result(function_result_temp))
 
             # I think should restore caller saved registers here
+
+        # step 10 codes below
+        def visitLoadGlobalAddr(self, instr: LoadGlobalAddr) -> None:
+            self.seq.append(Riscv.LoadGlobalAddr(instr.dsts[0], instr.name))
+
+        def visitLoadFromMem(self, instr: LoadFromMem) -> None:
+            self.seq.append(Riscv.LoadFromMem(instr.dst, instr.offset, instr.addr))
+
+        def visitStoreToMem(self, instr: StoreToMem) -> None:
+            self.seq.append(Riscv.StoreToMem(instr.value, instr.offset, instr.addr))
+
 
         # in step11, you need to think about how to store the array 
 """

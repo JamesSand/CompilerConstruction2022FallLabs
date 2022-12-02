@@ -189,7 +189,7 @@ class TACGen(Visitor[FuncVisitor, None]):
             if symbol.isGlobal:
                 var_name = symbol.name
                 var_addr = mv.visitLoadGlobalAddr(var_name)
-                mv.visitStoreToMem(var_addr, 0, expr.lhs.getattr("val"))
+                mv.visitStoreToMem(expr.lhs.getattr("val"), 0, var_addr)
 
     def visitIf(self, stmt: If, mv: FuncVisitor) -> None:
         # visiti condition
