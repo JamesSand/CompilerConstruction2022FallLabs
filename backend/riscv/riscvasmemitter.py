@@ -238,17 +238,12 @@ class RiscvSubroutineEmitter(SubroutineEmitter):
     # usually happen when using a temp which is stored to stack before
     # in step9, you need to think about the fuction parameters here
     def emitLoadFromStack(self, dst: Reg, src: Temp):
-
-        # TODO
-
         # since function parameter always be the first virtual register
         if src.index < self.funct_parameter_num:
             # base on FP
             self.buf.append(
                 Riscv.NativeLoadWord(dst, Riscv.FP, self.argument_offset[src.index])
             )
-
-
             return
 
         if src.index not in self.offsets:

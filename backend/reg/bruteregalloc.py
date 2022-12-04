@@ -140,16 +140,10 @@ class BruteRegAlloc(RegAlloc):
 
         # if push, then do nothing, just store the argument and its offset
         if isinstance(instr, Riscv.Param):
-
-            # print(instr)
-
-            # breakpoint()
             # we do not need to do toNative here
             argument_reg = srcRegs[0]
             
             # argument gere is sequence, do not need to record offset
-            # argument_offset = instr.offset
-
             self.call_argument_list.append(argument_reg)
 
         # if call, calculate all space need
@@ -167,9 +161,7 @@ class BruteRegAlloc(RegAlloc):
 
             # store to stack
             for reg in used_caller_saved:
-
                 subEmitter.emitStoreToStack(reg)
-
                 caller_save_dict[reg.name] = subEmitter.offsets[reg.temp.index]
 
             # have to do it by human
@@ -179,9 +171,6 @@ class BruteRegAlloc(RegAlloc):
                 for i in range(argument_len):
                     # self.call_argument_list = list[Reg]
                     reg_name = self.call_argument_list[i].name
-
-                    # breakpoint()
-
                     if reg_name in caller_save_dict:
                         # if this register is stored on stack
                         subEmitter.emitNative(Riscv.NativeLoadWord(Riscv.ArgRegs[i], Riscv.SP, caller_save_dict[reg_name]))

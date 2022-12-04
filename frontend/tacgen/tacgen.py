@@ -28,11 +28,6 @@ class TACGen(Visitor[FuncVisitor, None]):
     def transform(self, program: Program) -> TACProg:
 
         function_dict : dict [str , Function]= program.functions()
-
-        # funct_name_list = []
-        # for funct_name, funct in function_dict.items():
-        #     funct_name_list.append(funct_name)
-
         funct_list = []
         for funct_name, funct in function_dict.items():
             funct_list.append(funct)
@@ -61,11 +56,9 @@ class TACGen(Visitor[FuncVisitor, None]):
             # open a function visitor
             parameter_list = funct.parameter_list
             parameter_num = len(parameter_list)
-            # breakpoint()
             mv : FuncVisitor = pw.visitFunc(funct_name, parameter_num)
 
             funct_symbol : FuncSymbol = funct.getattr("symbol")
-            # breakpoint()
 
             # visit parameter list
             for parameter in parameter_list:
@@ -74,11 +67,6 @@ class TACGen(Visitor[FuncVisitor, None]):
                 funct_symbol.add_parameter_temp(parameter_temp)
 
             funct_name_dict[funct_name] = mv
-
-            # # visit body
-            # # breakpoint()
-            # funct.body.accept(self, mv)
-            # mv.visitEnd()
 
         # here we can visit main in the end
         mainFunc = program.mainFunc()
@@ -107,8 +95,6 @@ class TACGen(Visitor[FuncVisitor, None]):
 
         # Remember to call pw.visitEnd before finishing the translation phase.
         return pw.visitEnd()
-
-
     
 
     def visitBlock(self, block: Block, mv: FuncVisitor) -> None:

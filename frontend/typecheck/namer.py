@@ -34,7 +34,6 @@ class Namer(Visitor[ScopeStack, None]): # basic class of any AST scanner
         # Global scope. You don't have to consider it until Step 9.
         program.globalScope = GlobalScope
         ctx = ScopeStack(program.globalScope)
-        # breakpoint()
         program.accept(self, ctx)
         return program
 
@@ -73,20 +72,6 @@ class Namer(Visitor[ScopeStack, None]): # basic class of any AST scanner
 
             # we will not deal with things other than function and global var
             
-        # function_dict = program.functions()
-        # # for item in program.children:
-        # #     print(item)
-
-        # # breakpoint()
-
-        # for funct_name, funct in function_dict.items():
-        #     # breakpoint()
-        #     # visit each function
-        #     funct.accept(self, ctx)
-        
-        # we can always visit the main function in the end
-        # if have main function, then visit main function 
-        # program.mainFunc().accept(self, ctx)
 
     def visitFunction(self, func: Function, ctx: ScopeStack) -> None:
         # check if it has declared
@@ -230,8 +215,6 @@ class Namer(Visitor[ScopeStack, None]): # basic class of any AST scanner
         type = decl.var_t.type
         init_expr = decl.init_expr
 
-        # breakpoint()
-
         conflict_result = ctx.findConflict(name)
         if conflict_result:
             # conflict 
@@ -293,8 +276,6 @@ class Namer(Visitor[ScopeStack, None]): # basic class of any AST scanner
         """
         # name = str(ident)
         name = ident.value
-        # if name == "foo":
-        #     breakpoint()
         lookup_result = ctx.lookup(name)
         if lookup_result is None:
             # not declare
@@ -320,13 +301,11 @@ class Namer(Visitor[ScopeStack, None]): # basic class of any AST scanner
 
         conflict = ctx.findConflict(param_name)
         if conflict:
-            # breakpoint()
             raise DecafDeclConflictError(param_name)
 
         # if no conflict, define a symbol for it and attach it on ast tree
         param_symbol = VarSymbol(param_name, param_type)
         parameter.setattr("symbol", param_symbol)
-        # breakpoint()
         ctx.declare(param_symbol)
         
 
