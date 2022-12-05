@@ -20,15 +20,7 @@
 
 控制流图如下
 
-![image-20221202161455775](C:\Users\James\AppData\Roaming\Typora\typora-user-images\image-20221202161455775.png)
-
-
-
-根据题面给出的代码
-
-![image-20221202162240269](C:\Users\James\AppData\Roaming\Typora\typora-user-images\image-20221202162240269.png)
-
-发现第 8 行的 return a 实际上是不可达的，因此这一行代码没有出现在 cfg 中。同时根据 C 的规范，main 函数没有返回值的时候，默认返回 0，所以我在 cfg 中将 return 0 显式表达出来了。 
+![image-20221205112948291](C:\Users\James\AppData\Roaming\Typora\typora-user-images\image-20221205112948291.png)
 
 ### Step 8
 
