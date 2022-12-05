@@ -20,7 +20,8 @@
 
 控制流图如下
 
-![image-20221205112948291](C:\Users\James\AppData\Roaming\Typora\typora-user-images\image-20221205112948291.png)
+![image-20221205121846305](C:\Users\James\AppData\Roaming\Typora\typora-user-images\image-20221205121846305.png)
+
 
 ### Step 8
 
