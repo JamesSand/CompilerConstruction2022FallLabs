@@ -232,18 +232,30 @@ def p_opt_expression_empty(p):
     p[0] = NULL
 
 
-def p_declaration(p):
+def p_declaration_array(p):
     """
-    declaration : type Identifier
+    declaration : type Identifier array
     """
-    p[0] = Declaration(p[1], p[2])
+    p[0] = Declaration(p[1], p[2], p[3], None)
+
+def p_array_empty(p):
+    """
+    array : empty
+    """
+    p[0] = []
+
+def p_array(p):
+    """
+    array : LBracket Integer RBracket array
+    """
+    p[0] = [p[2]] + p[4]
 
 
 def p_declaration_init(p):
     """
     declaration : type Identifier Assign expression
     """
-    p[0] = Declaration(p[1], p[2], p[4])
+    p[0] = Declaration(p[1], p[2], None, p[4])
 
 def p_expression_list(p):
     """
@@ -296,10 +308,28 @@ def p_unary_expression(p):
     """
     unary(p)
 
+def p_refer_array(p):
+    """
+    refer : Identifier refer_arguments
+    """
+    p[0] = Refer(p[1], p[2])
+
+def p_refer_arguments(p):
+    """
+    refer_arguments : LBracket expression RBracket refer_arguments
+    """
+    p[0] = [p[2]] + p[4]
+
+def p_refer_empty(p):
+    """
+    refer_arguments : empty
+    """
+    p[0] = []
+
 
 def p_binary_expression(p):
     """
-    assignment : Identifier Assign expression
+    assignment : refer Assign expression
     logical_or : logical_or Or logical_and
     logical_and : logical_and And bit_or
     bit_or : bit_or BitOr xor
@@ -336,7 +366,7 @@ def p_int_literal_expression(p):
 
 def p_identifier_expression(p):
     """
-    primary : Identifier
+    primary : refer
     """
     p[0] = p[1]
 

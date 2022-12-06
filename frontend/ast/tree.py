@@ -299,18 +299,20 @@ class Declaration(Node):
         self,
         var_t: TypeLiteral,
         ident: Identifier,
-        init_expr: Optional[Expression] = None,
+        size_list : list[IntLiteral],
+        init_expr: Optional[Expression],
     ) -> None:
         super().__init__("declaration")
         self.var_t = var_t
         self.ident = ident
+        self.size_list = size_list
         self.init_expr = init_expr or NULL
 
     def __getitem__(self, key: int) -> Node:
-        return (self.var_t, self.ident, self.init_expr)[key]
+        return ([self.var_t, self.ident] + self.size_list + [self.init_expr])[key]
 
     def __len__(self) -> int:
-        return 3
+        return len(self.size_list) + 3
 
     def accept(self, v: Visitor[T, U], ctx: T):
         return v.visitDeclaration(self, ctx)
@@ -554,4 +556,24 @@ class Call(Expression):
 
     def accept(self, v: Visitor[T, U], ctx: T):
         return v.visitCall(self, ctx)
+
+# step 11 codes here
+class Refer(Expression):
+    """
+    AST node of reference.
+    """
+
+    def __init__(self, ident: Identifier, argument_list : list[Expression]) -> None:
+        super().__init__("reference")
+        self.ident = ident
+        self.argument_list = argument_list
+
+    def __getitem__(self, key: int) -> Node:
+        return ([self.ident] + self.argument_list)[key]
+
+    def __len__(self) -> int:
+        return len(self.argument_list) + 1
+
+    def accept(self, v: Visitor[T, U], ctx: T):
+        return v.visitRefer(self, ctx)
 
