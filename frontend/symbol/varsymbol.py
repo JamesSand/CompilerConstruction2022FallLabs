@@ -8,11 +8,14 @@ Variable symbol, representing a variable definition.
 
 
 class VarSymbol(Symbol):
-    def __init__(self, name: str, type: DecafType, isGlobal: bool = False) -> None:
+    def __init__(self, name: str, type: DecafType, isGlobal: bool = False, size_list : list[int] = []) -> None:
         super().__init__(name, type)
         self.temp: Temp
         self.isGlobal = isGlobal
         self.initValue = 0
+        self.size_list = []
+        for item in size_list:
+            self.size_list.append(item.value)
 
     def __str__(self) -> str:
         return "variable %s : %s" % (self.name, str(self.type))

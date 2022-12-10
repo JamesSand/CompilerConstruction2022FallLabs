@@ -261,3 +261,11 @@ class Riscv:
 
         def __str__(self) -> str:
             return "sw " + Riscv.FMT_OFFSET.format(self.srcs[0], self.offset, self.srcs[1])
+
+# step 11 
+    class GetArrayAddr(TACInstr):
+        def __init__(self, offset : Temp) -> None:
+            super().__init__(InstrKind.SEQ, [offset], [offset], None)
+
+        def __str__(self) -> str:
+            return "add " + Riscv.FMT3.format(self.dsts[0], Riscv.SP, self.srcs[0])

@@ -214,7 +214,7 @@ class Mark(TACInstr):
 # step 9 codes here
 class Param(TACInstr):
     def __init__(self, parameter: Temp) -> None:
-        super().__init__(InstrKind.SEQ, [], [parameter], None)
+        super().__init__(InstrKind.SEQ, [parameter], [], None)
         self.parameter = parameter
 
     def __str__(self) -> str:
@@ -236,13 +236,18 @@ class Call(TACInstr):
         v.visitCall(self)
 
 class Global(TACInstr):
-    def __init__(self, name: str, value : int) -> None:
+    def __init__(self, name: str, size : int, is_array : bool, value : int) -> None:
         super().__init__(InstrKind.SEQ, [], [], None)
         self.name = name
+        self.size = size
+        self.array = is_array
         self.value = value
 
     def __str__(self) -> str:
-        return "GLOBAL %s %d" % (self.name, self.value)
+        if self.array:
+            return "GLOBAL Array name: %s size: %d" % (self.name,self.size)
+        else:
+            return "GLOBAL Var name: %s value: %d" % (self.name,self.value)
 
     def accept(self, v: TACVisitor) -> None:
         v.visitGlobal(self)
@@ -285,3 +290,16 @@ class StoreToMem(TACInstr):
 
     def accept(self, v: TACVisitor) -> None:
         v.visitStoreToMem(self)
+
+# step 11
+class Alloc(TACInstr):
+    def __init__(self, dst: Temp, size: int) -> None:
+        super().__init__(InstrKind.SEQ, [dst], [], None)
+        self.dst = dst
+        self.size = size
+
+    def __str__(self) -> str:
+        return "%s = ALLOC %d" % (self.dsts[0], self.size)
+
+    def accept(self, v: TACVisitor) -> None:
+        v.visitAlloc(self)

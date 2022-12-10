@@ -37,11 +37,19 @@ class TACGen(Visitor[FuncVisitor, None]):
         # deal with global var first
         global_var : list[Declaration]= program.global_vars()
         for var in global_var:
-            init_value = 0
-            if var.init_expr is not NULL:
-                init_value = var.init_expr.value
-            
-            pw.global_vars.append(Global(var.ident.value, init_value))
+            if len(var.size_list):
+                # global array
+                global_array_size = 4
+                # calculate the size of the array
+                for size in var.size_list:
+                    global_array_size *= size.value
+                pw.global_vars.append(Global(var.ident.value, global_array_size, True, 0))
+            else:
+                # global var
+                init_value = 0
+                if var.init_expr is not NULL:
+                    init_value = var.init_expr.value
+                pw.global_vars.append(Global(var.ident.value, 4, False, init_value))
 
 
         funct_name_dict = {}
@@ -82,15 +90,11 @@ class TACGen(Visitor[FuncVisitor, None]):
         for funct_name, funct in function_dict.items():
             if funct_name == "main":
                 continue
-
             if funct.body is NULL:
                 continue
-
             mv = funct_name_dict[funct_name]
-
             # if funct.body is not NULL:
             funct.body.accept(self, mv)
-
             mv.visitEnd()
 
         # Remember to call pw.visitEnd before finishing the translation phase.
@@ -121,17 +125,31 @@ class TACGen(Visitor[FuncVisitor, None]):
         1. Set the 'val' attribute of ident as the temp variable of the 'symbol' attribute of ident.
         """
         symbol : VarSymbol= ident.getattr("symbol")
-        if symbol is None:
-            breakpoint()
-        if symbol.isGlobal:
-            var_name = symbol.name
-            var_addr = mv.visitLoadGlobalAddr(var_name)
-            var_temp = mv.visitLoadFromMem(var_addr, 0)
-            ident.setattr("val", var_temp)
+
+        # check if is array
+        if len(symbol.size_list):
+            # array
+            if symbol.isGlobal:
+                # global array
+                var_name = symbol.name
+                var_addr = mv.visitLoadGlobalAddr(var_name)
+                ident.setattr("val", var_addr)
+            else:
+                # local array
+                temp = symbol.temp
+                # Identifier 的挂载和 Declaration 的挂载一致
+                ident.setattr("val", temp)
         else:
-            temp = symbol.temp
-            # Identifier 的挂载和 Declaration 的挂载一致
-            ident.setattr("val", temp)
+            # var
+            if symbol.isGlobal:
+                var_name = symbol.name
+                var_addr = mv.visitLoadGlobalAddr(var_name)
+                var_temp = mv.visitLoadFromMem(var_addr, 0)
+                ident.setattr("val", var_temp)
+            else:
+                temp = symbol.temp
+                # Identifier 的挂载和 Declaration 的挂载一致
+                ident.setattr("val", temp)
 
         # 先给 a 一个 虚拟寄存器
 
@@ -141,13 +159,27 @@ class TACGen(Visitor[FuncVisitor, None]):
         2. Use mv.freshTemp to get a new temp variable for this symbol.
         3. If the declaration has an initial value, use mv.visitAssignment to set it.
         """
-        new_var = decl.getattr('symbol')
-        new_var.temp = mv.freshTemp()
-        init_expr = decl.init_expr
-        if not init_expr is NULL:
-            init_expr.accept(self, mv) # 翻译成三地址码指令
-            value = init_expr.getattr("val") # 所有表达式都有一个值，三地址码左边的虚拟寄存器是 val
-            mv.visitAssignment(new_var.temp, value) # 生成了一条三地址码的赋值语句
+        symbol = decl.getattr('symbol')
+
+        if len(symbol.size_list):
+            # local array
+
+            # calculate size
+            size = 4
+            for item in symbol.size_list:
+                size *= item
+            
+            # allocate memory
+            symbol.temp = mv.visitAlloc(size)
+
+        else:
+            # var
+            symbol.temp = mv.freshTemp()
+            init_expr = decl.init_expr
+            if not init_expr is NULL:
+                init_expr.accept(self, mv) # 翻译成三地址码指令
+                value = init_expr.getattr("val") # 所有表达式都有一个值，三地址码左边的虚拟寄存器是 val
+                mv.visitAssignment(symbol.temp, value) # 生成了一条三地址码的赋值语句
 
     def visitAssignment(self, expr: Assignment, mv: FuncVisitor) -> None:
         """
@@ -158,24 +190,40 @@ class TACGen(Visitor[FuncVisitor, None]):
 
         # a = b = 1
         # 表达式的返回值是 左值的值
-
-        expr.lhs.accept(self, mv)
         expr.rhs.accept(self, mv)
-
+        expr.lhs.accept(self, mv)
         # 右边的值赋给左边
         # 左边的值赋给表达式
 
         assign_result = mv.visitAssignment(expr.lhs.getattr("val"), expr.rhs.getattr("val"))
-
         # expression 的 val 是左值的 虚拟寄存器
         expr.setattr("val", assign_result)
 
-        if isinstance(expr.lhs, Identifier):
+        # if expr.lhs.ident.value == "state":
+        #     breakpoint()
+
+        # if isinstance(expr.lhs.ident, Identifier):
+        #     symbol : VarSymbol= expr.lhs.ident.getattr("symbol")
+        #     if symbol.isGlobal:
+        #         var_name = symbol.name
+        #         var_addr = mv.visitLoadGlobalAddr(var_name)
+        #         mv.visitStoreToMem(expr.lhs.getattr("val"), 0, var_addr)
+        if isinstance(expr.lhs, Refer):
             symbol : VarSymbol= expr.lhs.getattr("symbol")
-            if symbol.isGlobal:
-                var_name = symbol.name
-                var_addr = mv.visitLoadGlobalAddr(var_name)
-                mv.visitStoreToMem(expr.lhs.getattr("val"), 0, var_addr)
+            if len(symbol.size_list):
+                # array
+                addr = expr.lhs.getattr("addr")
+                mv.visitStoreToMem(expr.lhs.getattr("val"), 0, addr)
+            else:
+                # var
+                if symbol.isGlobal:
+                    var_name = symbol.name
+                    var_addr = mv.visitLoadGlobalAddr(var_name)
+                    mv.visitStoreToMem(expr.lhs.getattr("val"), 0, var_addr)
+        else:
+            raise Exception("tac gen visit Assign lhs is not Refer")
+
+        
 
     def visitIf(self, stmt: If, mv: FuncVisitor) -> None:
         # visiti condition
@@ -366,16 +414,10 @@ class TACGen(Visitor[FuncVisitor, None]):
     def visitCall(self, call : Call, mv: FuncVisitor) -> None:
         argument_list = call.argument_list
 
-        # breakpoint()
-
-        # if len(argument_list) == 3:
-        #     breakpoint()
-
         argument_temp_list = []
 
         for argument in argument_list:
             # allocate temp for each argument, expression in actual
-            # breakpoint()
             argument.accept(self, mv)
             # use param to declare arguments
             argument_temp = argument.getattr("val")
@@ -391,3 +433,49 @@ class TACGen(Visitor[FuncVisitor, None]):
         call_result_temp = mv.visitCall(funct_name)
         call.setattr("val", call_result_temp)
         
+    def visitRefer(self, refer: Refer, mv: FuncVisitor) -> None:
+        # accept ident first
+        refer.ident.accept(self, mv)
+        refer.setattr("val", refer.ident.getattr("val"))
+
+        if len(refer.argument_list):
+            # array
+            # a[0][1]
+            # T2 = 0 T3 = 1
+
+            # prepare the size list
+            array_symbol = refer.getattr("symbol")
+            size_list = array_symbol.size_list
+            # array call
+            argument_temp_list = []
+            for argument in refer.argument_list:
+                argument.accept(self, mv)
+                # use param to declare arguments
+                argument_temp_list.append(argument.getattr("val"))
+
+            # argument_temp_list.reverse()
+            offset = mv.visitLoad(0)
+            for i in range(len(argument_temp_list)):
+                argument_temp = argument_temp_list[i]
+
+                # calculate the size
+                size = 1
+                for j in range(i+1, len(size_list)):
+                    size *= size_list[j]
+                
+                arg_mul_temp = mv.visitBinary(tacop.BinaryOp.MUL, argument_temp, mv.visitLoad(size))
+                mv.visitBinarySelf(tacop.BinaryOp.ADD, offset, arg_mul_temp)
+
+            mv.visitBinarySelf(tacop.BinaryOp.MUL, offset, mv.visitLoad(4))
+
+            base_temp = refer.ident.getattr("val")
+            mv.visitBinarySelf(tacop.BinaryOp.ADD, offset, base_temp)
+
+            # record the position of the array item
+            refer.setattr("addr", offset)
+
+            value_temp = mv.visitLoadFromMem(offset, 0)
+            refer.setattr("val", value_temp)
+
+            
+                

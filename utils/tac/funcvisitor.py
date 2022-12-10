@@ -132,3 +132,9 @@ class FuncVisitor:
         self.func.add(Call(call_result_temp, funct_label))
         return call_result_temp
 
+    # step 11
+    def visitAlloc(self, size : int) -> Temp:
+        temp = self.freshTemp()
+        self.func.add(Alloc(temp, size))
+        return temp
+

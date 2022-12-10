@@ -41,6 +41,10 @@ class BruteRegAlloc(RegAlloc):
 
         self.call_argument_list : list[Reg] = []
 
+        self.break_counter = 0
+
+        self.call_argument_index : list[int] = []
+
     def accept(self, graph: CFG, info: SubroutineInfo) -> None:
         # this is for a singal function
         # here graph stand for the CFG of this function
@@ -63,12 +67,6 @@ class BruteRegAlloc(RegAlloc):
             if bb.label is not None:
                 # emit label
                 subEmitter.emitLabel(bb.label)
-
-
-            # for loc in bb.locs:
-            #     print(loc.instr)
-
-            # breakpoint()
 
             # allocate for this basic block
             self.localAlloc(bb, subEmitter)
@@ -119,8 +117,10 @@ class BruteRegAlloc(RegAlloc):
         srcRegs: list[Reg] = []
         dstRegs: list[Reg] = []
 
-        # if isinstance(instr, Riscv.Param):
-        #     breakpoint()
+        # add index to live in analysis
+        if len(self.call_argument_index):
+            for index in self.call_argument_index:
+                loc.liveIn.add(index)
 
         # allocate reg for src temps
         for i in range(len(instr.srcs)):
@@ -130,6 +130,11 @@ class BruteRegAlloc(RegAlloc):
             else:
                 srcRegs.append(self.allocRegFor(temp, True, loc.liveIn, subEmitter))
 
+        # if isinstance(instr, Riscv.Param):
+        #     if instr.param_temp.index == 2:
+        #         self.break_counter = 1
+        #         breakpoint()
+
         # allocate reg for dst temps
         for i in range(len(instr.dsts)):
             temp = instr.dsts[i]
@@ -138,10 +143,21 @@ class BruteRegAlloc(RegAlloc):
             else:
                 dstRegs.append(self.allocRegFor(temp, False, loc.liveIn, subEmitter))
 
+        # if isinstance(instr, Riscv.Param):
+        #     if instr.param_temp.index == 2:
+        #         self.break_counter = 1
+        #         breakpoint()
+
+        # if self.break_counter:
+        #     breakpoint()
+
         # if push, then do nothing, just store the argument and its offset
         if isinstance(instr, Riscv.Param):
             # we do not need to do toNative here
             argument_reg = srcRegs[0]
+
+            temp_index = instr.param_temp.index
+            self.call_argument_index.append(temp_index)
             
             # argument gere is sequence, do not need to record offset
             self.call_argument_list.append(argument_reg)
@@ -151,6 +167,9 @@ class BruteRegAlloc(RegAlloc):
             # store calller save
             # here i sill check if it is used
             used_caller_saved = []
+
+            # if self.break_counter:
+            #     breakpoint()
 
             for reg in self.emitter.callerSaveRegs:
                 if reg.isUsed():
@@ -206,6 +225,8 @@ class BruteRegAlloc(RegAlloc):
 
             # clear call_argument_list
             self.call_argument_list = []
+            # clear call_argument_index
+            self.call_argument_index = []
 
             # call function, i.e. toNative
             subEmitter.emitNative(instr.toNative(dstRegs, srcRegs))

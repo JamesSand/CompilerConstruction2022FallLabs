@@ -32,11 +32,17 @@ class RiscvAsmEmitter(AsmEmitter):
         
         # init all global vars here
         for var in global_vars:
-            self.printer.println(".data")
-            self.printer.println(f".global {var.name}")
-            self.printer.printLabel(Label(LabelKind.BLOCK, var.name))
-            self.printer.println(f".word {var.value}")
-        self.printer.println("")
+            if var.array:
+                self.printer.println(".bss")
+                self.printer.println(".global " + var.name)
+                self.printer.printLabel(Label(LabelKind.BLOCK, var.name))
+                self.printer.println(".space " + str(var.size))
+            else:
+                self.printer.println(".data")
+                self.printer.println(f".global {var.name}")
+                self.printer.printLabel(Label(LabelKind.BLOCK, var.name))
+                self.printer.println(f".word {var.value}")
+        # self.printer.println("")
 
         self.printer.println(".text")
         self.printer.println(".global main")
@@ -50,7 +56,6 @@ class RiscvAsmEmitter(AsmEmitter):
             RiscvAsmEmitter.RiscvInstrSelector(func.entry)
         )
         for instr in func.getInstrSeq():
-            # breakpoint()
             # here instr is a derive class of tacinstr
             # tacintr is only an abstracat and basic class
 
@@ -58,8 +63,7 @@ class RiscvAsmEmitter(AsmEmitter):
             # the visitor is RiscvInstrSelector
             instr.accept(selector)
 
-        info = SubroutineInfo(func.entry)
-        # breakpoint()
+        info = SubroutineInfo(func.entry, selector.array_size)
 
         return (selector.seq, info)
 
@@ -77,6 +81,9 @@ class RiscvAsmEmitter(AsmEmitter):
             self.seq = []
 
             self.parameter_to_push = []
+
+            # record all array size and alloc them in the begin of the function
+            self.array_size = 0
 
         # in step11, you need to think about how to deal with globalTemp in almost all the visit functions. 
         def visitReturn(self, instr: Return) -> None:
@@ -185,6 +192,13 @@ class RiscvAsmEmitter(AsmEmitter):
 
 
         # in step11, you need to think about how to store the array 
+
+        def visitAlloc(self, alloc: Alloc) -> None:
+            self.seq.append(Riscv.LoadImm(alloc.dsts[0], self.array_size))
+            self.array_size += alloc.size
+            self.seq.append(Riscv.GetArrayAddr(alloc.dsts[0]))
+
+        
 """
 RiscvAsmEmitter: an SubroutineEmitter for RiscV
 """
@@ -192,9 +206,11 @@ RiscvAsmEmitter: an SubroutineEmitter for RiscV
 class RiscvSubroutineEmitter(SubroutineEmitter):
     def __init__(self, emitter: RiscvAsmEmitter, info: SubroutineInfo) -> None:
         super().__init__(emitter, info)
+
+        self.array_size = info.array_size
         
         # + 4 is for the RA reg , + 4 for FP
-        self.nextLocalOffset = 4 * len(Riscv.CalleeSaved) + 4 + 4
+        self.nextLocalOffset = 4 * len(Riscv.CalleeSaved) + 4 + 4 + self.array_size
         
         # the buf which stored all the NativeInstrs in this function
         self.buf: list[NativeInstr] = []
@@ -247,7 +263,6 @@ class RiscvSubroutineEmitter(SubroutineEmitter):
             return
 
         if src.index not in self.offsets:
-            breakpoint()
             raise IllegalArgumentException()
         else:
             self.buf.append(
@@ -286,16 +301,16 @@ class RiscvSubroutineEmitter(SubroutineEmitter):
         for i in range(len(Riscv.CalleeSaved)):
             if Riscv.CalleeSaved[i].isUsed():
                 self.printer.printInstr(
-                    Riscv.NativeStoreWord(Riscv.CalleeSaved[i], Riscv.SP, 4 * i)
+                    Riscv.NativeStoreWord(Riscv.CalleeSaved[i], Riscv.SP, 4 * i + self.array_size)
                 )
 
         # also store ra here
         self.printer.printInstr(
-            Riscv.NativeStoreWord(Riscv.RA, Riscv.SP, 4 * len(Riscv.CalleeSaved))
+            Riscv.NativeStoreWord(Riscv.RA, Riscv.SP, 4 * len(Riscv.CalleeSaved) + self.array_size)
         )
 
         self.printer.printInstr(
-            Riscv.NativeStoreWord(Riscv.FP, Riscv.SP, 4 * len(Riscv.CalleeSaved) + 4)
+            Riscv.NativeStoreWord(Riscv.FP, Riscv.SP, 4 * len(Riscv.CalleeSaved) + 4 + self.array_size)
         )
 
         # done all callee save
@@ -331,16 +346,16 @@ class RiscvSubroutineEmitter(SubroutineEmitter):
             if Riscv.CalleeSaved[i].isUsed():
                 # print("restore")
                 self.printer.printInstr(
-                    Riscv.NativeLoadWord(Riscv.CalleeSaved[i], Riscv.SP, 4 * i)
+                    Riscv.NativeLoadWord(Riscv.CalleeSaved[i], Riscv.SP, 4 * i + self.array_size)
                 )
 
         # restore ra
         self.printer.printInstr(
-            Riscv.NativeLoadWord(Riscv.RA, Riscv.SP, 4 * len(Riscv.CalleeSaved))
+            Riscv.NativeLoadWord(Riscv.RA, Riscv.SP, 4 * len(Riscv.CalleeSaved) + self.array_size)
         )
 
         self.printer.printInstr(
-            Riscv.NativeLoadWord(Riscv.FP, Riscv.SP, 4 * len(Riscv.CalleeSaved) + 4)
+            Riscv.NativeLoadWord(Riscv.FP, Riscv.SP, 4 * len(Riscv.CalleeSaved) + 4 + self.array_size)
         )
 
         # pull up sp

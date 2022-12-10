@@ -62,7 +62,13 @@ class Namer(Visitor[ScopeStack, None]): # basic class of any AST scanner
                     raise DecafDeclConflictError(var_name)
 
                 # declare the var
-                var_symbol = VarSymbol(var_name, var_type, True)
+                # check if it is a array
+                if(len(item.size_list)):
+                    # array
+                    var_symbol = VarSymbol(var_name, var_type, True, item.size_list)
+                else:
+                    var_symbol = VarSymbol(var_name, var_type, True)
+
                 ctx.globalscope.declare(var_symbol)
                 item.setattr("symbol", var_symbol)
 
@@ -114,6 +120,7 @@ class Namer(Visitor[ScopeStack, None]): # basic class of any AST scanner
             # visit statement directly
             # we can not afford another scope (x)
             for child in func.body:
+                breakpoint()
                 child.accept(self, ctx)
 
         # func.body.accept(self, ctx) # then visit the block of the function, recursively
@@ -219,8 +226,15 @@ class Namer(Visitor[ScopeStack, None]): # basic class of any AST scanner
         if conflict_result:
             # conflict 
             raise DecafDeclConflictError(name)
+
+        # no conflict
+        if len(decl.size_list):
+            # local array
+            symbol = VarSymbol(name, type, False, decl.size_list)
+            ctx.declare(symbol)
+            decl.setattr('symbol', symbol)
         else:
-            # no conflict
+            # var symbol
             new_decalre = VarSymbol(name, type)
             ctx.declare(new_decalre)
             # decl.ident.setattr('symbol', new_decalre)
@@ -237,16 +251,12 @@ class Namer(Visitor[ScopeStack, None]): # basic class of any AST scanner
         """
         1. Refer to the implementation of visitBinary.
         """
-
         # minidecaf 不用考虑左右访问顺序
         # a[++i] = ++i;
 
         # 构建符号，访问即可
-
         expr.rhs.accept(self, ctx)
         expr.lhs.accept(self, ctx)
-        
-            
 
     def visitUnary(self, expr: Unary, ctx: ScopeStack) -> None:
         expr.operand.accept(self, ctx)
@@ -332,3 +342,18 @@ class Namer(Visitor[ScopeStack, None]): # basic class of any AST scanner
         call.ident.setattr("symbol", funct_symbol)
         for argument in call.argument_list:
             argument.accept(self, ctx)
+
+    def visitRefer(self, refer: Refer, ctx: ScopeStack) -> None:
+        # accept identifier first
+        refer.ident.accept(self, ctx)
+        ident_symbol = refer.ident.getattr("symbol")
+        refer.setattr("symbol", ident_symbol)
+
+        # accept arguments
+        for argument in refer.argument_list:
+            argument.accept(self, ctx)
+
+        
+
+
+

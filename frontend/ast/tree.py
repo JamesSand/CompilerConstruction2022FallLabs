@@ -305,7 +305,9 @@ class Declaration(Node):
         super().__init__("declaration")
         self.var_t = var_t
         self.ident = ident
-        self.size_list = size_list
+        self.size_list = []
+        if size_list:
+            self.size_list = size_list
         self.init_expr = init_expr or NULL
 
     def __getitem__(self, key: int) -> Node:
