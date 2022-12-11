@@ -499,12 +499,8 @@ class TACGen(Visitor[FuncVisitor, None]):
         # accept ident first
         refer.ident.accept(self, mv)
         refer.setattr("val", refer.ident.getattr("val"))
-
         if len(refer.argument_list):
             # array
-            # a[0][1]
-            # T2 = 0 T3 = 1
-
             # prepare the size list
             array_symbol = refer.getattr("symbol")
             size_list = array_symbol.size_list
@@ -514,28 +510,21 @@ class TACGen(Visitor[FuncVisitor, None]):
                 argument.accept(self, mv)
                 # use param to declare arguments
                 argument_temp_list.append(argument.getattr("val"))
-
             # argument_temp_list.reverse()
             offset = mv.visitLoad(0)
             for i in range(len(argument_temp_list)):
                 argument_temp = argument_temp_list[i]
-
                 # calculate the size
                 size = 1
                 for j in range(i+1, len(size_list)):
                     size *= size_list[j]
-                
                 arg_mul_temp = mv.visitBinary(tacop.BinaryOp.MUL, argument_temp, mv.visitLoad(size))
                 mv.visitBinarySelf(tacop.BinaryOp.ADD, offset, arg_mul_temp)
-
             mv.visitBinarySelf(tacop.BinaryOp.MUL, offset, mv.visitLoad(4))
-
             base_temp = refer.ident.getattr("val")
             mv.visitBinarySelf(tacop.BinaryOp.ADD, offset, base_temp)
-
             # record the position of the array item
             refer.setattr("addr", offset)
-
             value_temp = mv.visitLoadFromMem(offset, 0)
             refer.setattr("val", value_temp)
 
