@@ -120,7 +120,6 @@ class Namer(Visitor[ScopeStack, None]): # basic class of any AST scanner
             # visit statement directly
             # we can not afford another scope (x)
             for child in func.body:
-                breakpoint()
                 child.accept(self, ctx)
 
         # func.body.accept(self, ctx) # then visit the block of the function, recursively

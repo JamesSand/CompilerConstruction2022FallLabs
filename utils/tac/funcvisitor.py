@@ -125,11 +125,11 @@ class FuncVisitor:
     def visitParameter(self, argument_temp : Temp) -> None:
         self.func.add(Param(argument_temp))
 
-    def visitCall(self, funct_name : str) -> Temp:
+    def visitCall(self, funct_name : str, argument_temp_list : list[Temp]) -> Temp:
         # return the function result
         call_result_temp = self.freshTemp()
         funct_label = self.ctx.getFuncLabel(funct_name)
-        self.func.add(Call(call_result_temp, funct_label))
+        self.func.add(Call(call_result_temp, argument_temp_list, funct_label))
         return call_result_temp
 
     # step 11

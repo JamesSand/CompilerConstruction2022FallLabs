@@ -16,10 +16,14 @@ Some examples:
 
 
 class ArrayType(DecafType):
-    def __init__(self, base: DecafType, length: int) -> None:
+    def __init__(self, base: DecafType, size_list : list[int]) -> None:
         super().__init__()
         self.base = base
-        self.length = length
+        self.length = 4
+        for item in size_list:
+            self.length *= item
+
+        self.size_list = size_list
 
     @property
     def indexed(self) -> DecafType:

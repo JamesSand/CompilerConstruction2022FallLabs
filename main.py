@@ -49,8 +49,8 @@ def step_tac(p: Program):
     namer = Namer()
     # breakpoint()
     p = namer.transform(p)
-    typer = Typer()
-    p = typer.transform(p)
+    # typer = Typer()
+    # p = typer.transform(p)
 
     tacgen = TACGen()
     tac_prog = tacgen.transform(p)

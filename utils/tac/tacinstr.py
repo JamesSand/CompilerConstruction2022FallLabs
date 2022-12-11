@@ -224,9 +224,10 @@ class Param(TACInstr):
         return v.visitParameter(self)
 
 class Call(TACInstr):
-    def __init__(self,result : Temp, target: Label) -> None:
-        super().__init__(InstrKind.SEQ, [result], [], target)
+    def __init__(self, result : Temp, args : list[Temp], target: Label) -> None:
+        super().__init__(InstrKind.SEQ, [result], args, target)
         self.result = result
+        self.args = args
         self.target = target
 
     def __str__(self) -> str:

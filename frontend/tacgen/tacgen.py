@@ -430,7 +430,7 @@ class TACGen(Visitor[FuncVisitor, None]):
 
         # call the function
         funct_name = call.ident.value
-        call_result_temp = mv.visitCall(funct_name)
+        call_result_temp = mv.visitCall(funct_name, argument_temp_list)
         call.setattr("val", call_result_temp)
         
     def visitRefer(self, refer: Refer, mv: FuncVisitor) -> None:

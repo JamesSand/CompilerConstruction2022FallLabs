@@ -206,8 +206,9 @@ class Riscv:
             )
 
     class Call(TACInstr):
-        def __init__(self, target: Label) -> None:
-            super().__init__(InstrKind.SEQ, [Riscv.A0, Riscv.RA], [], target)
+        def __init__(self, result_temp : Temp, target: Label, args : list[Temp]) -> None:
+            super().__init__(InstrKind.SEQ, [result_temp], args, target)
+            # print(target, args)
             self.target = target
         
         def __str__(self) -> str:

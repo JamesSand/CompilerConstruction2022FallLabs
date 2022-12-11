@@ -78,6 +78,10 @@ class BruteRegAlloc(RegAlloc):
         self.bindings[temp.index] = reg
         reg.occupied = True
         reg.temp = temp
+        # if temp.index == 39 and str(reg) == 't3':
+        #     import traceback
+        #     print(traceback.format_exc())
+        #     breakpoint()
 
     def unbind(self, temp: Temp):
         if temp.index in self.bindings:
@@ -117,10 +121,10 @@ class BruteRegAlloc(RegAlloc):
         srcRegs: list[Reg] = []
         dstRegs: list[Reg] = []
 
-        # add index to live in analysis
-        if len(self.call_argument_index):
-            for index in self.call_argument_index:
-                loc.liveIn.add(index)
+        # # add index to live in analysis
+        # if len(self.call_argument_index):
+        #     for index in self.call_argument_index:
+        #         loc.liveIn.add(index)
 
         # allocate reg for src temps
         for i in range(len(instr.srcs)):
@@ -168,11 +172,8 @@ class BruteRegAlloc(RegAlloc):
             # here i sill check if it is used
             used_caller_saved = []
 
-            # if self.break_counter:
-            #     breakpoint()
-
             for reg in self.emitter.callerSaveRegs:
-                if reg.isUsed():
+                if reg.occupied:
                     used_caller_saved.append(reg)
 
             # caller save reg name, correspond to its offset accrod to SP
@@ -273,7 +274,8 @@ class BruteRegAlloc(RegAlloc):
                 return reg
 
         reg = self.emitter.allocatableRegs[
-            random.randint(0, len(self.emitter.allocatableRegs))
+            # random.randint(0, len(self.emitter.allocatableRegs))
+            0
         ]
         subEmitter.emitStoreToStack(reg)
         subEmitter.emitComment("  spill {} ({})".format(str(reg), str(reg.temp)))

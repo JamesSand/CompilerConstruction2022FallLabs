@@ -168,8 +168,10 @@ class RiscvAsmEmitter(AsmEmitter):
             self.parameter_to_push = []
 
             # call the function
+            target_temp = call.result
             funct_label = call.target
-            self.seq.append(Riscv.Call(funct_label))
+            argument_temp_list = call.args
+            self.seq.append(Riscv.Call(target_temp, funct_label, argument_temp_list))
 
             # self.seq.append()            
 
@@ -294,6 +296,14 @@ class RiscvSubroutineEmitter(SubroutineEmitter):
                 Riscv.NativeStoreWord(Riscv.ArgRegs[i], Riscv.SP, 4 * i)
             )
 
+
+        # self.printer.printInstr(Riscv.SPAdd(- 4 * 2))
+
+        # for i in range(2):
+        #     self.printer.printInstr(
+        #         Riscv.NativeStoreWord(Riscv.ArgRegs[i], Riscv.SP, 4 * i)
+        #     )
+
         self.printer.printInstr(Riscv.SPAdd(-self.nextLocalOffset))
 
         # in step9, you need to think about how to store RA here
@@ -363,6 +373,8 @@ class RiscvSubroutineEmitter(SubroutineEmitter):
 
         # pull up for a0 - a7
         self.printer.printInstr(Riscv.SPAdd( 4 * 8))
+
+        # self.printer.printInstr(Riscv.SPAdd( 4 * 2))
 
         self.printer.printComment("end of epilogue")
         self.printer.println("")
