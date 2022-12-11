@@ -106,9 +106,25 @@ def p_parameter(p):
     """
     parameter : type Identifier
     """
-    p[0] = Parameter(p[1], p[2])
+    p[0] = Parameter(p[1], p[2], False)
 
+def p_array_parameter(p):
+    """
+    parameter : type Identifier LBracket maybe_int RBracket
+    """
+    p[0] = Parameter(p[1], p[2], True)
 
+def p_maybe_int(p):
+    """
+    maybe_int : Integer
+    """
+    p[0] = []
+
+def p_maybe_int_empty(p):
+    """
+    maybe_int : empty
+    """
+    p[0] = []
 
 def p_block(p):
     """
@@ -238,18 +254,54 @@ def p_declaration_array(p):
     """
     p[0] = Declaration(p[1], p[2], p[3], None)
 
+def p_declaration_array_assign(p):
+    """
+    declaration : type Identifier array Assign array_expression
+    """
+    p[0] = Declaration(p[1], p[2], p[3], p[5])
+
+
+def p_array_expression(p):
+    """
+    array_expression : LBrace array_expression_sub RBrace
+    """
+    p[0] = p[2]
+
+def p_array_expression_sub(p):
+    """
+    array_expression_sub : expression Comma array_expression_sub
+    """
+    p[0] = [p[1]] + p[3]
+
+def p_array_expression_sub_single(p):
+    """
+    array_expression_sub : expression
+    """
+    p[0] = [p[1]]
+
 def p_array_empty(p):
     """
-    array : empty
+    array_sub : empty
     """
     p[0] = []
 
-def p_array(p):
+def p_array_sub_recurse(p):
     """
-    array : LBracket Integer RBracket array
+    array_sub : LBracket Integer RBracket array_sub
     """
     p[0] = [p[2]] + p[4]
 
+def p_array(p):
+    """
+    array : LBracket Integer RBracket array_sub
+    """
+    p[0] = [p[2]] + p[4]
+
+def p_var_only_declaration(p):
+    """
+    declaration : type Identifier
+    """
+    p[0] = Declaration(p[1], p[2], None, None)
 
 def p_declaration_init(p):
     """

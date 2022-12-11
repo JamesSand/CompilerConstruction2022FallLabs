@@ -21,6 +21,10 @@ class ProgramWriter:
             self.funcs.append(func)
             self.ctx.putFuncLabel(funct_name, len(func.parameter_list))
 
+        # put in fill_n function label
+        self.ctx.putFuncLabel("fill_n", 3)
+        # self.ctx.putFuncLabel("init", 0)
+
         self.global_vars = []
 
     def visitMainFunc(self) -> FuncVisitor:

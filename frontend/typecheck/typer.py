@@ -90,10 +90,24 @@ class Typer(Visitor[None, None]):
         pass
 
     def visitDeclaration(self, decl: Declaration, ctx: None) -> None:
-        if decl.init_expr is not NULL:
-            decl.init_expr.accept(self, ctx)
-            if decl.init_expr.type != INT:
-                raise TypeError("Declaration type is not IntType")
+        if len(decl.size_list):
+            # array type
+            for size in decl.size_list:
+                size.accept(self, ctx)
+                if size.type != INT:
+                    raise TypeError("Array size type is not IntType")
+            
+            if decl.init_expr is not NULL:
+                for init in decl.init_expr:
+                    init.accept(self, ctx)
+                    if init.type != INT:
+                        raise TypeError("Array init type is not IntType")
+                        
+        else:
+            if decl.init_expr is not NULL:
+                decl.init_expr.accept(self, ctx)
+                if decl.init_expr.type != INT:
+                    raise TypeError("Declaration type is not IntType")
 
 
 

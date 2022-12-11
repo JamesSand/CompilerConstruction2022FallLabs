@@ -1,2 +1,2 @@
-python3.9 main.py --tac --input minidecaf-tests/testcases/step11/bubbsort.c
+python3.9 main.py --riscv --input minidecaf-tests/testcases/step12/global_init.c
 

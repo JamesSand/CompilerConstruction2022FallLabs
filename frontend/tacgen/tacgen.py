@@ -34,16 +34,42 @@ class TACGen(Visitor[FuncVisitor, None]):
 
         pw = ProgramWriter(funct_list)
 
+        # init_mv : FuncVisitor = pw.visitFunc("init", 0)
+        global_array_init_list = []
+
         # deal with global var first
         global_var : list[Declaration]= program.global_vars()
         for var in global_var:
             if len(var.size_list):
                 # global array
-                global_array_size = 4
+                global_array_size = 1
                 # calculate the size of the array
                 for size in var.size_list:
                     global_array_size *= size.value
-                pw.global_vars.append(Global(var.ident.value, global_array_size, True, 0))
+                pw.global_vars.append(Global(var.ident.value, global_array_size * 4, True, 0))
+
+                # check init
+                if len(var.init_expr):
+
+                    global_array_init_list.append(var)
+                    
+                    # addr_temp = init_mv.visitLoadGlobalAddr(var.ident.value)
+                    # zero_temp = init_mv.visitLoad(0)
+                    # size_temp = init_mv.visitLoad(global_array_size)
+                    # init_mv.visitParameter(addr_temp)
+                    # init_mv.visitParameter(zero_temp)
+                    # init_mv.visitParameter(size_temp)
+                    # init_mv.visitCall("fill_n", [addr_temp, zero_temp, size_temp])
+
+                    # init_value_temp_list = []
+                    # # init array
+                    # init_expr = var.init_expr
+                    # for item in init_expr:
+                    #     item.accept(self, init_mv)
+                    #     init_value_temp_list.append(item.getattr("val"))
+
+                    # for i in range(len(init_value_temp_list)):
+                    #     init_mv.visitStoreToMem(init_value_temp_list[i], i * 4, addr_temp)
             else:
                 # global var
                 init_value = 0
@@ -51,6 +77,7 @@ class TACGen(Visitor[FuncVisitor, None]):
                     init_value = var.init_expr.value
                 pw.global_vars.append(Global(var.ident.value, 4, False, init_value))
 
+        # init_mv.visitEnd()
 
         funct_name_dict = {}
 
@@ -81,6 +108,27 @@ class TACGen(Visitor[FuncVisitor, None]):
         
         # The function visitor of 'main' is special.
         mv = pw.visitMainFunc()
+
+        # init global var first
+        if len(global_array_init_list):
+            for var in global_array_init_list:
+                addr_temp = mv.visitLoadGlobalAddr(var.ident.value)
+                zero_temp = mv.visitLoad(0)
+                size_temp = mv.visitLoad(global_array_size)
+                mv.visitParameter(addr_temp)
+                mv.visitParameter(zero_temp)
+                mv.visitParameter(size_temp)
+                mv.visitCall("fill_n", [addr_temp, zero_temp, size_temp])
+
+                init_value_temp_list = []
+                # init array
+                init_expr = var.init_expr
+                for item in init_expr:
+                    item.accept(self, mv)
+                    init_value_temp_list.append(item.getattr("val"))
+
+                for i in range(len(init_value_temp_list)):
+                    mv.visitStoreToMem(init_value_temp_list[i], i * 4, addr_temp)
 
         mainFunc.body.accept(self, mv)
         # Remember to call mv.visitEnd after the translation a function.
@@ -165,12 +213,35 @@ class TACGen(Visitor[FuncVisitor, None]):
             # local array
 
             # calculate size
-            size = 4
+            size = 1
             for item in symbol.size_list:
                 size *= item
             
             # allocate memory
-            symbol.temp = mv.visitAlloc(size)
+            symbol.temp = mv.visitAlloc(size * 4)
+
+            # check init
+            if decl.init_expr is not NULL:
+                # set all 0
+                zero_temp = mv.visitLoad(0)
+                size_temp = mv.visitLoad(size)
+                mv.visitParameter(symbol.temp)
+                mv.visitParameter(zero_temp)
+                mv.visitParameter(size_temp)
+                mv.visitCall("fill_n", [symbol.temp, zero_temp, size_temp])
+
+                init_value_temp_list = []
+                # init array
+                init_expr = decl.init_expr
+                for item in init_expr:
+                    item.accept(self, mv)
+                    init_value_temp_list.append(item.getattr("val"))
+
+                # here we only deal with 1 dimension array
+                # init_value_temp_list.reverse()
+
+                for i in range(len(init_value_temp_list)):
+                    mv.visitStoreToMem(init_value_temp_list[i], i * 4, symbol.temp)
 
         else:
             # var
@@ -199,14 +270,6 @@ class TACGen(Visitor[FuncVisitor, None]):
         # expression 的 val 是左值的 虚拟寄存器
         expr.setattr("val", assign_result)
 
-        # if expr.lhs.ident.value == "state":
-
-        # if isinstance(expr.lhs.ident, Identifier):
-        #     symbol : VarSymbol= expr.lhs.ident.getattr("symbol")
-        #     if symbol.isGlobal:
-        #         var_name = symbol.name
-        #         var_addr = mv.visitLoadGlobalAddr(var_name)
-        #         mv.visitStoreToMem(expr.lhs.getattr("val"), 0, var_addr)
         if isinstance(expr.lhs, Refer):
             symbol : VarSymbol= expr.lhs.getattr("symbol")
             if len(symbol.size_list):

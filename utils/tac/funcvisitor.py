@@ -47,7 +47,8 @@ class FuncVisitor:
         if isinstance(value, int):
             self.func.add(LoadImm4(temp, value))
         else:
-            self.func.add(LoadStrConst(temp, value))
+            # self.func.add(LoadStrConst(temp, value))
+            pass
         return temp
 
     def visitLoadGlobalAddr(self, global_var_name : str) -> Temp:

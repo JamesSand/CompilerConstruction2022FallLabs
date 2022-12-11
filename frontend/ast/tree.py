@@ -521,11 +521,13 @@ class Parameter(Node):
     def __init__(
         self,
         var_t: TypeLiteral,
-        ident: Identifier
+        ident: Identifier,
+        is_array : bool
     ) -> None:
         super().__init__("parameter")
         self.var_t = var_t
         self.ident = ident
+        self.array = is_array
 
     def __getitem__(self, key: int) -> Node:
         return (self.var_t, self.ident)[key]

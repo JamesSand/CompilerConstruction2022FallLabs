@@ -320,7 +320,11 @@ class Namer(Visitor[ScopeStack, None]): # basic class of any AST scanner
             raise DecafDeclConflictError(param_name)
 
         # if no conflict, define a symbol for it and attach it on ast tree
-        param_symbol = VarSymbol(param_name, param_type)
+        if parameter.array:
+            # array
+            param_symbol = VarSymbol(param_name, param_type, False, [0])
+        else:
+            param_symbol = VarSymbol(param_name, param_type)
         parameter.setattr("symbol", param_symbol)
         ctx.declare(param_symbol)
         

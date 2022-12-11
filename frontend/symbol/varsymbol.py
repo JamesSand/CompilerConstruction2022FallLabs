@@ -2,6 +2,8 @@ from utils.tac.temp import Temp
 
 from .symbol import *
 
+from frontend.ast.tree import IntLiteral
+
 """
 Variable symbol, representing a variable definition.
 """
@@ -15,7 +17,10 @@ class VarSymbol(Symbol):
         self.initValue = 0
         self.size_list = []
         for item in size_list:
-            self.size_list.append(item.value)
+            if isinstance(item, IntLiteral):
+                self.size_list.append(item.value)
+            else:
+                self.size_list.append(item)
 
     def __str__(self) -> str:
         return "variable %s : %s" % (self.name, str(self.type))
