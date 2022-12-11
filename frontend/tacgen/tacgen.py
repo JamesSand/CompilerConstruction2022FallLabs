@@ -200,7 +200,6 @@ class TACGen(Visitor[FuncVisitor, None]):
         expr.setattr("val", assign_result)
 
         # if expr.lhs.ident.value == "state":
-        #     breakpoint()
 
         # if isinstance(expr.lhs.ident, Identifier):
         #     symbol : VarSymbol= expr.lhs.ident.getattr("symbol")

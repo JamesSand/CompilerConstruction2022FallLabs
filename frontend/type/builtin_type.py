@@ -26,3 +26,5 @@ class BuiltinType(DecafType):
 
 
 INT = BuiltinType("int")
+
+ARRAY = BuiltinType("array")

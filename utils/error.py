@@ -33,6 +33,14 @@ class DecafDeclConflictError(Exception):
     def __init__(self, name: str) -> None:
         super().__init__("Semantic error: declaration conflict '%s'" % name)
 
+class DecafArraySizeError(Exception):
+    def __init__(self, name: str) -> None:
+        super().__init__("Semantic error: array size must be positive integer '%s'" % name)
+
+class DecafBadArrayCallError(Exception):
+    def __init__(self, name: str) -> None:
+        super().__init__("Semantic error: array call must be integer '%s'" % name)
+
 
 class DecafBadIntValueError(Exception):
     def __init__(self, val: Union[str, int]) -> None:

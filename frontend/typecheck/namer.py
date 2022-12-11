@@ -229,6 +229,13 @@ class Namer(Visitor[ScopeStack, None]): # basic class of any AST scanner
         # no conflict
         if len(decl.size_list):
             # local array
+            # calculate array_size
+            array_size = 1
+            for size in decl.size_list:
+                array_size *= size.value
+            if array_size <= 0:
+                raise DecafArraySizeError(name)
+
             symbol = VarSymbol(name, type, False, decl.size_list)
             ctx.declare(symbol)
             decl.setattr('symbol', symbol)
@@ -345,12 +352,18 @@ class Namer(Visitor[ScopeStack, None]): # basic class of any AST scanner
     def visitRefer(self, refer: Refer, ctx: ScopeStack) -> None:
         # accept identifier first
         refer.ident.accept(self, ctx)
-        ident_symbol = refer.ident.getattr("symbol")
+        ident_symbol : VarSymbol = refer.ident.getattr("symbol")
         refer.setattr("symbol", ident_symbol)
 
-        # accept arguments
-        for argument in refer.argument_list:
-            argument.accept(self, ctx)
+        if len(refer.argument_list):
+            # array call
+            # check length
+            if len(refer.argument_list) != len(ident_symbol.size_list):
+                raise DecafBadArrayCallError(ident_symbol.name)
+
+            # accept arguments
+            for argument in refer.argument_list:
+                argument.accept(self, ctx)
 
         
 

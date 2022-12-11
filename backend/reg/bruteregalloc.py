@@ -81,7 +81,6 @@ class BruteRegAlloc(RegAlloc):
         # if temp.index == 39 and str(reg) == 't3':
         #     import traceback
         #     print(traceback.format_exc())
-        #     breakpoint()
 
     def unbind(self, temp: Temp):
         if temp.index in self.bindings:
@@ -137,7 +136,6 @@ class BruteRegAlloc(RegAlloc):
         # if isinstance(instr, Riscv.Param):
         #     if instr.param_temp.index == 2:
         #         self.break_counter = 1
-        #         breakpoint()
 
         # allocate reg for dst temps
         for i in range(len(instr.dsts)):
@@ -150,10 +148,8 @@ class BruteRegAlloc(RegAlloc):
         # if isinstance(instr, Riscv.Param):
         #     if instr.param_temp.index == 2:
         #         self.break_counter = 1
-        #         breakpoint()
 
         # if self.break_counter:
-        #     breakpoint()
 
         # if push, then do nothing, just store the argument and its offset
         if isinstance(instr, Riscv.Param):

@@ -34,14 +34,12 @@ class Asm:
             #     print(item)
             # print("-" * 50)
 
-            # breakpoint()
 
             builder = CFGBuilder()
             cfg: CFG = builder.buildFrom(pair[0])
             analyzer.accept(cfg)
 
             # allocate regs for tac virtual reg
-            # breakpoint()
             self.regAlloc.accept(cfg, pair[1])
 
             # for item in pair[0]:
@@ -50,7 +48,6 @@ class Asm:
 
             # # print("-" * 50)
 
-            # breakpoint()
 
         ret = self.emitter.emitEnd()
 

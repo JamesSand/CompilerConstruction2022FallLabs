@@ -27,7 +27,6 @@ class TACInstr:
         ret_list = []
         for src in self.srcs:
             # if isinstance(src, int):
-            #     breakpoint()
             ret_list.append(src.index)
 
         return ret_list
